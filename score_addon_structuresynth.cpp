@@ -1,5 +1,10 @@
 #include "score_addon_structuresynth.hpp"
-#include <StructureSynth/AnEffect.hpp>
+#include <Threedim/StructureSynth.hpp>
+#include <Threedim/ObjLoader.hpp>
+#include <Threedim/Primitive.hpp>
+
+#include <Threedim/ModelDisplay/Executor.hpp>
+#include <Threedim/ModelDisplay/Process.hpp>
 
 #include <Avnd/Factories.hpp>
 #include <score/plugins/FactorySetup.hpp>
@@ -16,7 +21,21 @@ score_addon_structuresynth::factories(
     const score::ApplicationContext& ctx,
     const score::InterfaceKey& key) const
 {
-  return Avnd::instantiate_fx<StructureSynth::Generator>(ctx, key);
+  auto fixed = Avnd::instantiate_fx<
+      Threedim::StrucSynth
+      , Threedim::ObjLoader
+      , Threedim::Primitive
+      >(ctx, key);
+  auto add = instantiate_factories<
+             score::ApplicationContext,
+      FW<Process::ProcessModelFactory,
+         Gfx::ModelDisplay::ProcessFactory
+         >,
+      FW<Execution::ProcessComponentFactory,
+         Gfx::ModelDisplay::ProcessExecutorComponentFactory
+         >>(ctx, key);
+  fixed.insert(fixed.end(), std::make_move_iterator(add.begin()), std::make_move_iterator(add.end()));
+  return fixed;
 }
 
 std::vector<score::PluginKey> score_addon_structuresynth::required() const

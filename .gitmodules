@@ -1,3 +1,9 @@
 [submodule "3rdparty/libssynth"]
 	path = 3rdparty/libssynth
 	url = https://github.com/jcelerier/libssynth
+[submodule "3rdparty/vcglib"]
+	path = 3rdparty/vcglib
+	url = https://github.com/cnr-isti-vclab/vcglib
+[submodule "3rdparty/eigen"]
+	path = 3rdparty/eigen
+	url = https://gitlab.com/libeigen/eigen

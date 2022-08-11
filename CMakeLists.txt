@@ -7,7 +7,6 @@ endif()
 project(score_addon_structuresynth LANGUAGES CXX)
 find_package(${QT_VERSION} REQUIRED COMPONENTS Xml)
 
-
 add_library(
   score_addon_structuresynth
 
@@ -33,10 +32,26 @@ add_library(
   3rdparty/libssynth/src/ssynth/MiniParser.cpp
   3rdparty/libssynth/src/ssynth/RandomStreams.cpp
 
-  StructureSynth/AnEffectModel.hpp
-  StructureSynth/AnEffectModel.cpp
-  StructureSynth/AnEffectUi.hpp
-  StructureSynth/AnEffect.hpp
+  Threedim/TinyObj.cpp
+
+  Threedim/StructureSynth.hpp
+  Threedim/StructureSynth.cpp
+
+  Threedim/ObjLoader.hpp
+  Threedim/ObjLoader.cpp
+
+  Threedim/Primitive.hpp
+  Threedim/Primitive.cpp
+
+
+  Threedim/ModelDisplay/ModelDisplayNode.hpp
+  Threedim/ModelDisplay/ModelDisplayNode.cpp
+  Threedim/ModelDisplay/Executor.hpp
+  Threedim/ModelDisplay/Executor.cpp
+  Threedim/ModelDisplay/Metadata.hpp
+  Threedim/ModelDisplay/Process.hpp
+  Threedim/ModelDisplay/Process.cpp
+  Threedim/ModelDisplay/Layer.hpp
 
   score_addon_structuresynth.hpp
   score_addon_structuresynth.cpp
@@ -44,5 +59,16 @@ add_library(
 
 setup_score_plugin(score_addon_structuresynth)
 
-target_include_directories(score_addon_structuresynth PRIVATE 3rdparty/libssynth/src)
-target_link_libraries(score_addon_structuresynth PUBLIC score_plugin_engine score_plugin_avnd  ${QT_PREFIX}::Xml)
+target_include_directories(score_addon_structuresynth
+  PRIVATE
+    3rdparty/libssynth/src
+    3rdparty/vcglib
+    3rdparty/eigen
+)
+target_link_libraries(score_addon_structuresynth
+  PUBLIC
+    score_plugin_engine
+    score_plugin_avnd
+    score_plugin_gfx
+    ${QT_PREFIX}::Xml
+)
