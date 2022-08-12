@@ -3,15 +3,13 @@
 #include <Gfx/GfxApplicationPlugin.hpp>
 #include <Gfx/GfxContext.hpp>
 #include <Gfx/GfxExecNode.hpp>
-#include <Threedim/ModelDisplay/ModelDisplayNode.hpp>
-#include <Threedim/ModelDisplay/Process.hpp>
 #include <Gfx/TexturePort.hpp>
 #include <Process/Dataflow/Port.hpp>
 #include <Process/ExecutionContext.hpp>
-
-#include <score/document/DocumentContext.hpp>
-
+#include <Threedim/ModelDisplay/ModelDisplayNode.hpp>
+#include <Threedim/ModelDisplay/Process.hpp>
 #include <ossia/dataflow/port.hpp>
+#include <score/document/DocumentContext.hpp>
 
 namespace Gfx::ModelDisplay
 {
@@ -21,7 +19,8 @@ public:
   model_display_node(GfxExecutionAction& ctx)
       : gfx_exec_node{ctx}
   {
-    id = exec_context->ui->register_node(std::make_unique<score::gfx::ModelDisplayNode>());
+    id = exec_context->ui->register_node(
+        std::make_unique<score::gfx::ModelDisplayNode>());
   }
 
   ~model_display_node()
@@ -39,11 +38,12 @@ ProcessExecutorComponent::ProcessExecutorComponent(
     QObject* parent)
     : ProcessComponent_T{element, ctx, "modelComponent", parent}
 {
-  auto n = ossia::make_node<model_display_node>(*ctx.execState, ctx.doc.plugin<DocumentPlugin>().exec);
+  auto n = ossia::make_node<model_display_node>(
+      *ctx.execState, ctx.doc.plugin<DocumentPlugin>().exec);
 
-  for(auto* outlet : element.outlets())
+  for (auto* outlet : element.outlets())
   {
-    if(auto out = qobject_cast<Gfx::TextureOutlet*>(outlet))
+    if (auto out = qobject_cast<Gfx::TextureOutlet*>(outlet))
     {
       out->nodeId = n->id;
     }
@@ -52,7 +52,7 @@ ProcessExecutorComponent::ProcessExecutorComponent(
   n->root_inputs().push_back(new ossia::texture_inlet);
   n->root_inputs().push_back(new ossia::geometry_inlet);
 
-  for (std::size_t i = 2; i < 5; i++)
+  for (std::size_t i = 2; i < 6; i++)
   {
     auto ctrl = qobject_cast<Process::ControlInlet*>(element.inlets()[i]);
     auto& p = n->add_control();
@@ -73,9 +73,9 @@ ProcessExecutorComponent::ProcessExecutorComponent(
 
 void ProcessExecutorComponent::cleanup()
 {
-  for(auto* outlet : this->process().outlets())
+  for (auto* outlet : this->process().outlets())
   {
-    if(auto out = qobject_cast<TextureOutlet*>(outlet))
+    if (auto out = qobject_cast<TextureOutlet*>(outlet))
     {
       out->nodeId = -1;
     }

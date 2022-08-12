@@ -1,10 +1,12 @@
 #include "Primitive.hpp"
 
-#include <QString>
-#include <QDebug>
-#include <iostream>
 #include <vcg/complex/algorithms/clean.h>
 #include <vcg/complex/algorithms/create/platonic.h>
+
+#include <QDebug>
+#include <QString>
+
+#include <iostream>
 
 namespace
 {
@@ -12,22 +14,34 @@ using namespace vcg;
 class TFace;
 class TVertex;
 
-struct TUsedTypes : public vcg::UsedTypes< vcg::Use<TVertex>::AsVertexType, vcg::Use<TFace>::AsFaceType > { };
+struct TUsedTypes
+    : public vcg::UsedTypes<vcg::Use<TVertex>::AsVertexType, vcg::Use<TFace>::AsFaceType>
+{
+};
 
-class TVertex : public Vertex<TUsedTypes,
-                              vertex::BitFlags,
-                              vertex::Coord3f,
-                              vertex::Normal3f,
-                              vertex::Mark > { };
+class TVertex
+    : public Vertex<
+          TUsedTypes,
+          vertex::BitFlags,
+          vertex::Coord3f,
+          vertex::Normal3f,
+          vertex::Mark>
+{
+};
 
-class TFace : public Face<TUsedTypes,
-                          face::VertexRef,
-                          face::Normal3f,
-                          face::BitFlags,
-                          face::FFAdj
-                          > {};
+class TFace
+    : public Face<
+          TUsedTypes,
+          face::VertexRef,
+          face::Normal3f,
+          face::BitFlags,
+          face::FFAdj>
+{
+};
 
-class TMesh : public vcg::tri::TriMesh<std::vector<TVertex>, std::vector<TFace>> { };
+class TMesh : public vcg::tri::TriMesh<std::vector<TVertex>, std::vector<TFace>>
+{
+};
 }
 
 namespace Threedim
@@ -36,18 +50,17 @@ namespace Threedim
 Primitive::Primitive() = default;
 Primitive::~Primitive() = default;
 
-void Primitive::operator()()
-{
-}
+void Primitive::operator()() { }
 
 void Primitive::update()
 {
   static thread_local TMesh mesh;
   mesh.Clear();
 
-  switch(inputs.geometry) {
+  switch (inputs.geometry)
+  {
     case decltype(inputs.geometry)::Sphere:
-      vcg::tri::Sphere(mesh, 4);
+      vcg::tri::Sphere(mesh, 3);
       break;
     case decltype(inputs.geometry)::Icosahedron:
       vcg::tri::Icosahedron(mesh);
@@ -74,7 +87,7 @@ void Primitive::update()
   vcg::tri::UpdateTopology<TMesh>::FaceFace(mesh);
   vcg::tri::Clean<TMesh>::RemoveNonManifoldFace(mesh);
   vcg::tri::UpdateTopology<TMesh>::FaceFace(mesh);
-  vcg::tri::UpdateNormal<TMesh>::PerVertexNelsonMaxWeighted(mesh);
+  vcg::tri::UpdateNormal<TMesh>::PerVertexNormalized(mesh);
 
   vcg::tri::RequirePerVertexNormal(mesh);
 
@@ -86,7 +99,8 @@ void Primitive::update()
   float* norm_start = complete.data() + vertices * 3;
   const float scale = inputs.scale;
 
-  for(auto& fi : mesh.face){ // iterate each faces
+  for (auto& fi : mesh.face)
+  { // iterate each faces
 
     auto v0 = fi.V(0);
     auto v1 = fi.V(1);
@@ -123,13 +137,13 @@ void Primitive::update()
     (*norm_start++) = n2.Z();
   }
 
-  outputs.geometry.buffers.main_buffer.data = complete.data();
-  outputs.geometry.buffers.main_buffer.size = complete.size();
-  outputs.geometry.buffers.main_buffer.dirty = true;
+  outputs.geometry.mesh.buffers.main_buffer.data = complete.data();
+  outputs.geometry.mesh.buffers.main_buffer.size = complete.size();
+  outputs.geometry.mesh.buffers.main_buffer.dirty = true;
 
-  outputs.geometry.input.input1.offset = complete.size() / 2;
-  outputs.geometry.vertices = vertices;
-  outputs.geometry.dirty = true;
+  outputs.geometry.mesh.input.input1.offset = complete.size() / 2;
+  outputs.geometry.mesh.vertices = vertices;
+  outputs.geometry.mesh.dirty = true;
 }
 
 }

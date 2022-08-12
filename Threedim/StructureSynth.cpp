@@ -1,13 +1,15 @@
 #include "StructureSynth.hpp"
-#include <Threedim/TinyObj.hpp>
 
+#include <Threedim/TinyObj.hpp>
 #include <ssynth/Model/Builder.h>
 #include <ssynth/Model/Rendering/ObjRenderer.h>
 #include <ssynth/Parser/EisenParser.h>
 #include <ssynth/Parser/Preprocessor.h>
 #include <ssynth/Parser/Tokenizer.h>
-#include <QString>
+
 #include <QDebug>
+#include <QString>
+
 #include <iostream>
 
 namespace Threedim
@@ -52,58 +54,57 @@ rule R1 w 10 {
   }
 
   return data.toStdString();
-
 }
-catch(...)
+catch (...)
 {
   return std::string{};
 }
 
 StrucSynth::~StrucSynth()
 {
-  if(compute_thread.joinable())
+  if (compute_thread.joinable())
     compute_thread.join();
 }
 
 void StrucSynth::operator()()
 {
-  if(done.exchange(false))
+  if (done.exchange(false))
   {
     {
       std::lock_guard<std::mutex> lck{swap_mutex};
       std::swap(swap, complete);
     }
 
-    outputs.geometry.buffers.main_buffer.data = complete.data();
-    outputs.geometry.buffers.main_buffer.size = complete.size();
-    outputs.geometry.buffers.main_buffer.dirty = true;
+    outputs.geometry.mesh.buffers.main_buffer.data = complete.data();
+    outputs.geometry.mesh.buffers.main_buffer.size = complete.size();
+    outputs.geometry.mesh.buffers.main_buffer.dirty = true;
 
-    outputs.geometry.input.input1.offset = complete.size() / 2;
-    outputs.geometry.vertices = complete.size() / (2 * 3);
-    outputs.geometry.dirty = true;
+    outputs.geometry.mesh.input.input1.offset = complete.size() / 2;
+    outputs.geometry.mesh.vertices = complete.size() / (2 * 3);
+    outputs.geometry.mesh.dirty = true;
   }
 }
 
 void StrucSynth::recompute()
 {
   // FIXME have an LV2-like thread-pool worker API
-  if(compute_thread.joinable())
+  if (compute_thread.joinable())
     compute_thread.join();
 
   compute_thread = std::thread(
-      [in = inputs.hehe, &done=done, &swap=swap, &mut=swap_mutex] () mutable
+      [in = inputs.hehe, &done = done, &swap = swap, &mut = swap_mutex]() mutable
       {
         auto input = CreateObj(QString::fromStdString(in));
-        if(input.empty())
+        if (input.empty())
           return;
 
         Threedim::float_vec buf;
-        if(auto mesh = Threedim::ObjFromString(input, buf))
+        if (auto mesh = Threedim::ObjFromString(input, buf))
         {
           std::lock_guard<std::mutex> lck{mut};
           std::swap(buf, swap);
         }
         done.store(true, std::memory_order_seq_cst);
-  });
+      });
 }
 }

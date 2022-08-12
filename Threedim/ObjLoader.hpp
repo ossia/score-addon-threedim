@@ -1,13 +1,11 @@
 #pragma once
 #include <Threedim/TinyObj.hpp>
-
-#include <halp/geometry.hpp>
-#include <halp/file_port.hpp>
-
 #include <halp/controls.hpp>
+#include <halp/file_port.hpp>
+#include <halp/geometry.hpp>
 #include <halp/meta.hpp>
-
 #include <ossia/detail/mutex.hpp>
+
 #include <thread>
 
 namespace Threedim
@@ -23,20 +21,21 @@ public:
 
   struct ins
   {
-    struct : halp::file_port<"OBJ file"> {
+    struct : halp::file_port<"OBJ file">
+    {
       halp_meta(extensions, "*.obj");
 
-      void update(ObjLoader& self)
-      {
-        self.load(this->file);
-      }
+      void update(ObjLoader& self) { self.load(this->file); }
     } obj;
   } inputs;
 
   struct
   {
-    struct : halp::dynamic_geometry {
+    struct
+    {
       halp_meta(name, "Geometry");
+      std::vector<halp::dynamic_geometry> mesh;
+      bool dirty = false;
     } geometry;
   } outputs;
 

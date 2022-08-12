@@ -1,13 +1,12 @@
 #pragma once
 
-#include <halp/geometry.hpp>
-
-#include <halp/controls.hpp>
-#include <halp/meta.hpp>
-
 #include <boost/container/vector.hpp>
-#include <ossia/detail/pod_vector.hpp>
+#include <halp/controls.hpp>
+#include <halp/geometry.hpp>
+#include <halp/meta.hpp>
 #include <ossia/detail/mutex.hpp>
+#include <ossia/detail/pod_vector.hpp>
+
 #include <thread>
 
 namespace Threedim
@@ -31,8 +30,10 @@ public:
 
   struct
   {
-    struct : halp::position_normals_geometry {
+    struct
+    {
       halp_meta(name, "Geometry");
+      halp::position_normals_geometry mesh;
     } geometry;
   } outputs;
 

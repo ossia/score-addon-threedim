@@ -17,14 +17,14 @@ public:
   explicit ModelDisplayNode();
   virtual ~ModelDisplayNode();
 
-  score::gfx::NodeRenderer*
-  createRenderer(RenderList& r) const noexcept override;
+  score::gfx::NodeRenderer* createRenderer(RenderList& r) const noexcept override;
 
   void process(Message&& msg) override;
   class Renderer;
   ModelCameraUBO ubo;
 
   ossia::vec3f position, rotation, scale;
+  float cameraDistance{50.f};
 };
 
 }

@@ -24,14 +24,17 @@ public:
     } geometry;
 
     struct : halp::hslider_f32<"Scale", halp::range{0.01, 100, 1.}>
-    { void update(Primitive& self) { self.update(); } } scale;
+    {
+      void update(Primitive& self) { self.update(); }
+    } scale;
   } inputs;
 
   struct
   {
-    struct : halp::position_normals_geometry
+    struct
     {
       halp_meta(name, "Geometry");
+      halp::position_normals_geometry mesh;
     } geometry;
   } outputs;
 
