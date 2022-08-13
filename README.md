@@ -1,2 +1,4 @@
-# StructureSynth
-A new and wonderful [ossia score](https://ossia.io) add-on
+# Threedim
+
+3D features and objects for ossia score
+

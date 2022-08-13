@@ -18,33 +18,38 @@ void ObjLoader::operator()()
 {
   if (done.exchange(false, std::memory_order_seq_cst))
   {
-    mesh m;
+    std::vector<mesh> new_meshes;
     {
       std::lock_guard<std::mutex> lck{swap_mutex};
-      m = this->meshinfo;
+      std::swap(new_meshes, this->meshinfo); // FIXME delete
       std::swap(swap, complete);
     }
 
-    halp::dynamic_geometry geom;
     if (!outputs.geometry.mesh.empty())
     {
-      geom = std::move(outputs.geometry.mesh[0]);
+      //geom = std::move(outputs.geometry.mesh[0]);
       outputs.geometry.mesh.clear();
     }
 
-    geom.buffers.clear();
-    geom.bindings.clear();
-    geom.attributes.clear();
-    geom.input.clear();
-    geom.vertices = m.vertices;
-    geom.topology = halp::dynamic_geometry::triangles;
-    geom.cull_mode = halp::dynamic_geometry::back;
-    geom.front_face = halp::dynamic_geometry::counter_clockwise;
-    geom.index = {};
-    geom.dirty = true;
-
-    if (m.vertices > 0)
+    for (auto& m : new_meshes)
     {
+      if (m.vertices <= 0)
+        continue;
+
+      halp::dynamic_geometry geom;
+
+      geom.buffers.clear();
+      geom.bindings.clear();
+      geom.attributes.clear();
+      geom.input.clear();
+      geom.topology = halp::dynamic_geometry::triangles;
+      geom.cull_mode = halp::dynamic_geometry::back;
+      geom.front_face = halp::dynamic_geometry::counter_clockwise;
+      geom.index = {};
+
+      geom.vertices = m.vertices;
+      geom.dirty = true;
+
       geom.buffers.push_back(halp::dynamic_geometry::buffer{
           .data = this->complete.data(),
           .size = int64_t(this->complete.size() * sizeof(float)),
@@ -99,19 +104,19 @@ void ObjLoader::operator()()
 
       // Vertex input
       using input_t = struct halp::dynamic_geometry::input;
-      int64_t cur_offset = 0;
-      geom.input.push_back(input_t{.buffer = 0, .offset = cur_offset});
-      cur_offset += 3 * meshinfo.vertices * sizeof(float);
+      geom.input.push_back(
+          input_t{.buffer = 0, .offset = m.pos_offset * (int)sizeof(float)});
 
       if (m.texcoord)
       {
-        geom.input.push_back(input_t{.buffer = 0, .offset = cur_offset});
-        cur_offset += 2 * meshinfo.vertices * sizeof(float);
+        geom.input.push_back(
+            input_t{.buffer = 0, .offset = m.texcoord_offset * (int)sizeof(float)});
       }
 
       if (m.normals)
       {
-        geom.input.push_back(input_t{.buffer = 0, .offset = cur_offset});
+        geom.input.push_back(
+            input_t{.buffer = 0, .offset = m.normal_offset * (int)sizeof(float)});
       }
 
       outputs.geometry.mesh.push_back(std::move(geom));
@@ -122,6 +127,9 @@ void ObjLoader::operator()()
 
 void ObjLoader::load(halp::text_file_view tv)
 {
+  if (tv.filename == cur_filename)
+    return;
+  cur_filename = tv.filename;
   // FIXME have an LV2-like thread-pool worker API
   if (compute_thread.joinable())
     compute_thread.join();
@@ -130,10 +138,10 @@ void ObjLoader::load(halp::text_file_view tv)
       [this, tv]() mutable
       {
         Threedim::float_vec buf;
-        if (auto mesh = Threedim::ObjFromString(tv.bytes, buf))
+        if (auto mesh = Threedim::ObjFromString(tv.bytes, buf); !mesh.empty())
         {
           std::lock_guard<std::mutex> lck{swap_mutex};
-          this->meshinfo = *mesh;
+          std::swap(this->meshinfo, mesh);
           std::swap(buf, swap);
         }
         done.store(true, std::memory_order_seq_cst);

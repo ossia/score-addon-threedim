@@ -17,8 +17,11 @@ namespace score::gfx
 static const constexpr auto model_display_vertex_shader = R"_(#version 450
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord;
+layout(location = 3) in vec3 normal;
 
-layout(location = 0) out vec2 v_texcoord;
+layout(location = 0) out vec3 esVertex;
+layout(location = 1) out vec3 esNormal;
+layout(location = 2) out vec2 v_texcoord;
 
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
@@ -41,6 +44,8 @@ out gl_PerVertex { vec4 gl_Position; };
 
 void main()
 {
+  esVertex = position;
+  esNormal = normal;
   v_texcoord = texcoord;
   gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
 }
@@ -51,6 +56,21 @@ layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
   vec2 texcoordAdjust;
   vec2 renderSize;
+};
+
+layout(std140, binding = 1) uniform process_t {
+  float time;
+  float timeDelta;
+  float progress;
+
+  int passIndex;
+  int frameIndex;
+
+  vec4 date;
+  vec4 mouse;
+  vec4 channelTime;
+
+  float sampleRate;
 };
 
 layout(std140, binding = 2) uniform material_t {
@@ -64,12 +84,49 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding=3) uniform sampler2D y_tex;
 
-layout(location = 0) in vec2 v_texcoord;
+layout(location = 0) in vec3 esVertex;
+layout(location = 1) in vec3 esNormal;
+layout(location = 2) in vec2 v_texcoord;
 layout(location = 0) out vec4 fragColor;
+
+vec4 lightPosition = vec4(100, 10, 10, 0.); // should be in the eye space
+vec4 lightAmbient = vec4(0.1, 0.1, 0.1, 1); // light ambient color
+vec4 lightDiffuse = vec4(0.0, 0.2, 0.7, 1); // light diffuse color
+vec4 lightSpecular = vec4(0.9, 0.9, 0.9, 1); // light specular color
+vec4 materialAmbient= vec4(0.1, 0.4, 0, 1); // material ambient color
+vec4 materialDiffuse= vec4(0.2, 0.8, 0, 1); // material diffuse color
+vec4 materialSpecular= vec4(0, 0, 1, 1); // material specular color
+float materialShininess = 0.5; // material specular shininess
 
 void main ()
 {
-  fragColor = texture(y_tex, v_texcoord);
+
+    vec3 normal = normalize(esNormal);
+    vec3 light;
+    lightPosition.y = sin(time) * 20.;
+    lightPosition.z = cos(time) * 50.;
+    if(lightPosition.w == 0.0)
+    {
+        light = normalize(lightPosition.xyz);
+    }
+    else
+    {
+        light = normalize(lightPosition.xyz - esVertex);
+    }
+    vec3 view = normalize(-esVertex);
+    vec3 halfv = normalize(light + view);
+
+    vec3 color = lightAmbient.rgb * materialAmbient.rgb;        // begin with ambient
+    float dotNL = max(dot(normal, light), 0.0);
+    color += lightDiffuse.rgb * materialDiffuse.rgb * dotNL;    // add diffuse
+    // color *= texture2D(map0, texCoord0).rgb;                    // modulate texture map
+    float dotNH = max(dot(normal, halfv), 0.0);
+    color += pow(dotNH, materialShininess) * lightSpecular.rgb * materialSpecular.rgb; // add specular
+
+
+    vec4 tex = texture(y_tex, v_texcoord);
+    fragColor = vec4(mix(color, tex.rgb, 0.5), materialDiffuse.a);
+
 }
 )_";
 
@@ -403,13 +460,16 @@ private:
     auto sampler = rhi.newSampler(
         QRhiSampler::Linear,
         QRhiSampler::Linear,
-        QRhiSampler::None,
+        QRhiSampler::Linear,
         QRhiSampler::Mirror,
         QRhiSampler::Mirror);
     sampler->setName("ISFNode::initInputSamplers::sampler");
     SCORE_ASSERT(sampler->create());
     m_inputTarget = score::gfx::createRenderTarget(
-        renderer.state, QRhiTexture::RGBA8, renderer.state.renderSize);
+        renderer.state,
+        QRhiTexture::RGBA8,
+        renderer.state.renderSize,
+        QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips);
     auto texture = m_inputTarget.texture;
     m_samplers.push_back({sampler, texture});
 
@@ -469,8 +529,8 @@ private:
     projection.perspective(
         90,
         qreal(renderer.state.renderSize.width()) / renderer.state.renderSize.height(),
-        0.0001,
-        1000.);
+        0.01,
+        10000.);
     QMatrix4x4 view;
 
     view.lookAt(
@@ -498,6 +558,8 @@ private:
     const auto& mesh = m_mesh ? *m_mesh : renderer.defaultQuad();
     // FIXME if(mesh.attributes.dirty..)
     initPasses(renderer, mesh);
+
+    res.generateMips(this->m_inputTarget.texture);
   }
 
   void runRenderPass(RenderList& renderer, QRhiCommandBuffer& cb, Edge& edge) override

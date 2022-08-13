@@ -4,11 +4,11 @@ if(NOT TARGET score_lib_base)
   include("${SCORE_SOURCE_DIR}/cmake/ScoreExternalAddon.cmake")
 endif()
 
-project(score_addon_structuresynth LANGUAGES CXX)
+project(score_addon_threedim LANGUAGES CXX)
 find_package(${QT_VERSION} REQUIRED COMPONENTS Xml)
 
 add_library(
-  score_addon_structuresynth
+  score_addon_threedim
 
   3rdparty/libssynth/src/ssynth/Parser/EisenParser.cpp
   3rdparty/libssynth/src/ssynth/Parser/Preprocessor.cpp
@@ -53,19 +53,19 @@ add_library(
   Threedim/ModelDisplay/Process.cpp
   Threedim/ModelDisplay/Layer.hpp
 
-  score_addon_structuresynth.hpp
-  score_addon_structuresynth.cpp
+  score_addon_threedim.hpp
+  score_addon_threedim.cpp
 )
 
-setup_score_plugin(score_addon_structuresynth)
+setup_score_plugin(score_addon_threedim)
 
-target_include_directories(score_addon_structuresynth
+target_include_directories(score_addon_threedim
   PRIVATE
     3rdparty/libssynth/src
     3rdparty/vcglib
     3rdparty/eigen
 )
-target_link_libraries(score_addon_structuresynth
+target_link_libraries(score_addon_threedim
   PUBLIC
     score_plugin_engine
     score_plugin_avnd

@@ -26,7 +26,6 @@ ObjFromString(std::string_view obj_data, std::string_view mtl_data, float_vec& b
     }
     return {};
   }
-  qDebug() << "Elapsed: " << e.nsecsElapsed() / 1e3;
 
   if (!reader.Warning().empty())
   {
@@ -38,45 +37,64 @@ ObjFromString(std::string_view obj_data, std::string_view mtl_data, float_vec& b
   if (shapes.empty())
     return {};
 
-  const auto faces = shapes[0].mesh.num_face_vertices.size();
-  const auto vertices = faces * 3;
+  int64_t total_vertices = 0;
+  for (auto& shape : shapes)
+  {
+    total_vertices += shape.mesh.num_face_vertices.size() * 3;
+  }
 
   const bool texcoords = !attrib.texcoords.empty();
   const bool normals = !attrib.normals.empty();
 
-  std::size_t float_count
-      = vertices * 3 + (normals ? vertices * 3 : 0) + (texcoords ? vertices * 2 : 0);
+  std::size_t float_count = total_vertices * 3 + (normals ? total_vertices * 3 : 0)
+                            + (texcoords ? total_vertices * 2 : 0);
 
   // 3 float per vertex for position, 3 per vertex for normal
-  buf.resize(float_count, boost::container::default_init);
+  buf.clear();
+  buf.resize(float_count, 0.); // boost::container::default_init);
 
-  float* pos = buf.data();
-  float* tc = nullptr;
-  float* norm = nullptr;
+  int64_t pos_offset = 0;
+  int64_t texcoord_offset = 0;
+  int64_t normal_offset = 0;
   if (texcoords)
   {
-    tc = pos + vertices * 3;
+    texcoord_offset = total_vertices * 3;
     if (normals)
-      norm = pos + vertices * 3 + vertices * 2;
+      normal_offset = texcoord_offset + total_vertices * 2;
   }
   else if (normals)
   {
-    norm = pos + vertices * 3;
+    normal_offset = total_vertices * 3;
   }
+  float* pos = buf.data() + pos_offset;
+  float* tc = buf.data() + texcoord_offset;
+  float* norm = buf.data() + normal_offset;
 
   std::vector<mesh> res;
-  size_t total_offset{};
-  auto& shape = shapes[0];
+  for (auto& shape : shapes)
   {
+    const auto faces = shape.mesh.num_face_vertices.size();
+    const auto vertices = faces * 3;
+
+    qDebug() << "Mesh:  " << pos_offset << texcoord_offset << normal_offset << texcoords
+             << normals;
+    res.push_back(
+        {.vertices = int64_t(vertices),
+         .pos_offset = pos_offset,
+         .texcoord_offset = texcoord_offset,
+         .normal_offset = normal_offset,
+         .texcoord = texcoords,
+         .normals = normals});
+
     size_t index_offset = 0;
 
-    if (norm && tc)
+    if (texcoords && normals)
     {
-      for (size_t fv : shape.mesh.num_face_vertices)
+      for (auto fv : shape.mesh.num_face_vertices)
       {
         if (fv != 3)
           return {};
-        for (size_t v = 0; v < 3; v++)
+        for (auto v = 0; v < 3; v++)
         {
           const auto idx = shape.mesh.indices[index_offset + v];
           *pos++ = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
@@ -92,8 +110,12 @@ ObjFromString(std::string_view obj_data, std::string_view mtl_data, float_vec& b
         }
         index_offset += 3;
       }
+
+      pos_offset += vertices * 3;
+      texcoord_offset += vertices * 2;
+      normal_offset += vertices * 3;
     }
-    else if (norm)
+    else if (normals)
     {
       for (size_t fv : shape.mesh.num_face_vertices)
       {
@@ -112,8 +134,10 @@ ObjFromString(std::string_view obj_data, std::string_view mtl_data, float_vec& b
         }
         index_offset += 3;
       }
+      pos_offset += vertices * 3;
+      normal_offset += vertices * 3;
     }
-    else if (tc)
+    else if (texcoords)
     {
       for (size_t fv : shape.mesh.num_face_vertices)
       {
@@ -131,6 +155,8 @@ ObjFromString(std::string_view obj_data, std::string_view mtl_data, float_vec& b
         }
         index_offset += 3;
       }
+      pos_offset += vertices * 3;
+      texcoord_offset += vertices * 2;
     }
     else
     {
@@ -147,15 +173,14 @@ ObjFromString(std::string_view obj_data, std::string_view mtl_data, float_vec& b
         }
         index_offset += 3;
       }
+      pos_offset += vertices * 3;
     }
-    res.push_back(
-        {.vertices = int64_t(vertices), .texcoord = texcoords, .normals = normals});
   }
 
   return res;
 }
 
-std::optional<mesh> ObjFromString(std::string_view obj_data, float_vec& data)
+std::vector<mesh> ObjFromString(std::string_view obj_data, float_vec& data)
 {
   std::string default_mtl = R"(newmtl default
 Ka  0.1986  0.0000  0.0000

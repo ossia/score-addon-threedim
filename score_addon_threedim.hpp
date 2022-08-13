@@ -6,14 +6,14 @@
 
 #include <verdigris>
 
-class score_addon_structuresynth final
+class score_addon_threedim final
     : public score::FactoryInterface_QtInterface
     , public score::Plugin_QtInterface
 {
   SCORE_PLUGIN_METADATA(1, "9f461313-af58-4365-a71f-b92fddc691cf")
 public:
-  score_addon_structuresynth();
-  ~score_addon_structuresynth() override;
+  score_addon_threedim();
+  ~score_addon_threedim() override;
 
 private:
   std::vector<std::unique_ptr<score::InterfaceBase>> factories(

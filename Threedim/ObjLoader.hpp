@@ -46,11 +46,12 @@ public:
   void load(halp::text_file_view);
 
   std::atomic_bool done{};
-  mesh meshinfo{};
+  std::vector<mesh> meshinfo{};
   std::mutex swap_mutex; // FIXME
   float_vec complete;
   float_vec swap TS_GUARDED_BY(swap_mutex);
   std::thread compute_thread;
+  std::string cur_filename;
 };
 
 }

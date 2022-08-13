@@ -99,7 +99,7 @@ void StrucSynth::recompute()
           return;
 
         Threedim::float_vec buf;
-        if (auto mesh = Threedim::ObjFromString(input, buf))
+        if (auto mesh = Threedim::ObjFromString(input, buf); !mesh.empty())
         {
           std::lock_guard<std::mutex> lck{mut};
           std::swap(buf, swap);
