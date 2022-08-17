@@ -11,7 +11,7 @@ class Primitive
 {
 public:
   halp_meta(name, "3D Primitive")
-  halp_meta(category, "Gfx")
+  halp_meta(category, "Visuals/3D")
   halp_meta(c_name, "3d_primitive")
   halp_meta(uuid, "cf8a328a-1ba6-47f8-929f-2168bdec90b0")
 

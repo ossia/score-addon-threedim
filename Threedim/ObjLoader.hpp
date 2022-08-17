@@ -15,7 +15,7 @@ class ObjLoader
 {
 public:
   halp_meta(name, "Object loader")
-  halp_meta(category, "Gfx")
+  halp_meta(category, "Visuals/3D")
   halp_meta(c_name, "obj_loader")
   halp_meta(uuid, "5df71765-505f-4ab7-98c1-f305d10a01ef")
 
