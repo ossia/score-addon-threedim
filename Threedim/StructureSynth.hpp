@@ -24,8 +24,9 @@ public:
   {
     struct edit : halp::lineedit<"Text", "">
     {
-      void update(StrucSynth& g) { g.recompute(); }
-    } hehe;
+      // Request a computation according to the currently defined program
+      void update(StrucSynth& g) { g.worker.request(this->value); }
+    } program;
   } inputs;
 
   struct
@@ -39,16 +40,17 @@ public:
 
   void operator()();
 
-  void recompute();
-
   struct w
   {
     std::function<void(std::string)> request;
+
+    // Called back in a worker thread
+    // The returned function will be later applied in this object's processing thread
     static std::function<void(StrucSynth&)> work(std::string_view s);
   } worker;
 
   using float_vec = boost::container::vector<float, ossia::pod_allocator<float>>;
-  float_vec complete;
+  float_vec m_vertexData;
 };
 
 }

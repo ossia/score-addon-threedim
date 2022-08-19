@@ -62,19 +62,6 @@ catch (...)
 
 void StrucSynth::operator()() { }
 
-void StrucSynth::recompute()
-{
-  if (worker.request)
-  {
-    worker.request(inputs.hehe.value);
-  }
-  else
-  {
-    if (auto w = worker.work(inputs.hehe.value))
-      w(*this);
-  }
-}
-
 std::function<void(StrucSynth&)> StrucSynth::w::work(std::string_view in)
 {
   auto input = CreateObj(QString::fromUtf8(in.data(), in.size()));
@@ -86,13 +73,13 @@ std::function<void(StrucSynth&)> StrucSynth::w::work(std::string_view in)
   {
     return [b = std::move(buf)](StrucSynth& s) mutable
     {
-      std::swap(b, s.complete);
-      s.outputs.geometry.mesh.buffers.main_buffer.data = s.complete.data();
-      s.outputs.geometry.mesh.buffers.main_buffer.size = s.complete.size();
+      std::swap(b, s.m_vertexData);
+      s.outputs.geometry.mesh.buffers.main_buffer.data = s.m_vertexData.data();
+      s.outputs.geometry.mesh.buffers.main_buffer.size = s.m_vertexData.size();
       s.outputs.geometry.mesh.buffers.main_buffer.dirty = true;
 
-      s.outputs.geometry.mesh.input.input1.offset = s.complete.size() / 2;
-      s.outputs.geometry.mesh.vertices = s.complete.size() / (2 * 3);
+      s.outputs.geometry.mesh.input.input1.offset = s.m_vertexData.size() / 2;
+      s.outputs.geometry.mesh.vertices = s.m_vertexData.size() / (2 * 3);
       s.outputs.geometry.mesh.dirty = true;
     };
   }
