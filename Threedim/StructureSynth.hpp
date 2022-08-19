@@ -37,18 +37,18 @@ public:
     } geometry;
   } outputs;
 
-  ~StrucSynth();
-
   void operator()();
 
   void recompute();
 
-  std::atomic_bool done{};
-  std::mutex swap_mutex; // FIXME
+  struct w
+  {
+    std::function<void(std::string)> request;
+    static std::function<void(StrucSynth&)> work(std::string_view s);
+  } worker;
+
   using float_vec = boost::container::vector<float, ossia::pod_allocator<float>>;
   float_vec complete;
-  float_vec swap TS_GUARDED_BY(swap_mutex);
-  std::thread compute_thread;
 };
 
 }

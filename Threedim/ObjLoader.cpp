@@ -8,26 +8,15 @@
 namespace Threedim
 {
 
-ObjLoader::~ObjLoader()
-{
-  if (compute_thread.joinable())
-    compute_thread.join();
-}
+void ObjLoader::operator()() { }
 
-void ObjLoader::operator()()
+void ObjLoader::rebuild_geometry()
 {
-  if (done.exchange(false, std::memory_order_seq_cst))
   {
-    std::vector<mesh> new_meshes;
-    {
-      std::lock_guard<std::mutex> lck{swap_mutex};
-      std::swap(new_meshes, this->meshinfo); // FIXME delete
-      std::swap(swap, complete);
-    }
+    std::vector<mesh>& new_meshes = this->meshinfo;
 
     if (!outputs.geometry.mesh.empty())
     {
-      //geom = std::move(outputs.geometry.mesh[0]);
       outputs.geometry.mesh.clear();
     }
 
@@ -125,26 +114,22 @@ void ObjLoader::operator()()
   }
 }
 
-void ObjLoader::load(halp::text_file_view tv)
+std::function<void(ObjLoader&)> ObjLoader::ins::obj_t::process(file_type tv)
 {
-  if (tv.filename == cur_filename)
-    return;
-  cur_filename = tv.filename;
-  // FIXME have an LV2-like thread-pool worker API
-  if (compute_thread.joinable())
-    compute_thread.join();
+  // This part happens in a separate thread
+  Threedim::float_vec buf;
+  if (auto mesh = Threedim::ObjFromString(tv.bytes, buf); !mesh.empty())
+  {
+    return [mesh = std::move(mesh), buf = std::move(buf)](ObjLoader& o) mutable
+    {
+      // This part happens in the execution thread
+      std::swap(o.meshinfo, mesh);
+      std::swap(o.complete, buf);
 
-  compute_thread = std::thread(
-      [this, tv]() mutable
-      {
-        Threedim::float_vec buf;
-        if (auto mesh = Threedim::ObjFromString(tv.bytes, buf); !mesh.empty())
-        {
-          std::lock_guard<std::mutex> lck{swap_mutex};
-          std::swap(this->meshinfo, mesh);
-          std::swap(buf, swap);
-        }
-        done.store(true, std::memory_order_seq_cst);
-      });
+      o.rebuild_geometry();
+    };
+  }
+  return {};
 }
+
 }

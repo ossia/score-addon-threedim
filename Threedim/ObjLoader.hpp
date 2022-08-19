@@ -21,11 +21,11 @@ public:
 
   struct ins
   {
-    struct : halp::file_port<"OBJ file">
+    struct obj_t : halp::file_port<"OBJ file">
     {
       halp_meta(extensions, "*.obj");
 
-      void update(ObjLoader& self) { self.load(this->file); }
+      static std::function<void(ObjLoader&)> process(file_type data);
     } obj;
   } inputs;
 
@@ -39,19 +39,12 @@ public:
     } geometry;
   } outputs;
 
-  ~ObjLoader();
-
   void operator()();
 
-  void load(halp::text_file_view);
+  void rebuild_geometry();
 
-  std::atomic_bool done{};
   std::vector<mesh> meshinfo{};
-  std::mutex swap_mutex; // FIXME
   float_vec complete;
-  float_vec swap TS_GUARDED_BY(swap_mutex);
-  std::thread compute_thread;
-  std::string cur_filename;
 };
 
 }

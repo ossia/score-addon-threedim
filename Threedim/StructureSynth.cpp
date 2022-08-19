@@ -60,51 +60,46 @@ catch (...)
   return std::string{};
 }
 
-StrucSynth::~StrucSynth()
-{
-  if (compute_thread.joinable())
-    compute_thread.join();
-}
-
-void StrucSynth::operator()()
-{
-  if (done.exchange(false))
-  {
-    {
-      std::lock_guard<std::mutex> lck{swap_mutex};
-      std::swap(swap, complete);
-    }
-
-    outputs.geometry.mesh.buffers.main_buffer.data = complete.data();
-    outputs.geometry.mesh.buffers.main_buffer.size = complete.size();
-    outputs.geometry.mesh.buffers.main_buffer.dirty = true;
-
-    outputs.geometry.mesh.input.input1.offset = complete.size() / 2;
-    outputs.geometry.mesh.vertices = complete.size() / (2 * 3);
-    outputs.geometry.mesh.dirty = true;
-  }
-}
+void StrucSynth::operator()() { }
 
 void StrucSynth::recompute()
 {
-  // FIXME have an LV2-like thread-pool worker API
-  if (compute_thread.joinable())
-    compute_thread.join();
-
-  compute_thread = std::thread(
-      [in = inputs.hehe, &done = done, &swap = swap, &mut = swap_mutex]() mutable
-      {
-        auto input = CreateObj(QString::fromStdString(in));
-        if (input.empty())
-          return;
-
-        Threedim::float_vec buf;
-        if (auto mesh = Threedim::ObjFromString(input, buf); !mesh.empty())
-        {
-          std::lock_guard<std::mutex> lck{mut};
-          std::swap(buf, swap);
-        }
-        done.store(true, std::memory_order_seq_cst);
-      });
+  if (worker.request)
+  {
+    worker.request(inputs.hehe.value);
+  }
+  else
+  {
+    if (auto w = worker.work(inputs.hehe.value))
+      w(*this);
+  }
 }
+
+std::function<void(StrucSynth&)> StrucSynth::w::work(std::string_view in)
+{
+  auto input = CreateObj(QString::fromUtf8(in.data(), in.size()));
+  if (input.empty())
+    return {};
+
+  Threedim::float_vec buf;
+  if (auto mesh = Threedim::ObjFromString(input, buf); !mesh.empty())
+  {
+    return [b = std::move(buf)](StrucSynth& s) mutable
+    {
+      std::swap(b, s.complete);
+      s.outputs.geometry.mesh.buffers.main_buffer.data = s.complete.data();
+      s.outputs.geometry.mesh.buffers.main_buffer.size = s.complete.size();
+      s.outputs.geometry.mesh.buffers.main_buffer.dirty = true;
+
+      s.outputs.geometry.mesh.input.input1.offset = s.complete.size() / 2;
+      s.outputs.geometry.mesh.vertices = s.complete.size() / (2 * 3);
+      s.outputs.geometry.mesh.dirty = true;
+    };
+  }
+  else
+  {
+    return {};
+  }
+}
+
 }
