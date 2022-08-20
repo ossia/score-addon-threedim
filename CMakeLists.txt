@@ -9,6 +9,10 @@ if(NOT TARGET score_plugin_avnd)
   return()
 endif()
 
+if(NOT TARGET score_plugin_gfx)
+  return()
+endif()
+
 find_package(${QT_VERSION} REQUIRED COMPONENTS Xml)
 if("${QT_PREFIX}" MATCHES "Qt6")
   find_package(${QT_VERSION} REQUIRED COMPONENTS Core5Compat)
