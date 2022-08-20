@@ -25,38 +25,35 @@ Model::Model(
   m_inlets.push_back(new GeometryInlet{Id<Process::Port>(1), this});
 
   m_inlets.push_back(new Process::XYZSpinboxes{
-      ossia::vec3f{-100., -100., -100.},
-      ossia::vec3f{100., 100., 100.},
+      ossia::vec3f{-1000., -1000., -1000.},
+      ossia::vec3f{1000., 1000., 1000.},
       ossia::vec3f{},
       "Position",
       Id<Process::Port>(2),
       this});
   m_inlets.push_back(new Process::XYZSpinboxes{
-      ossia::vec3f{0., 0., 0.},
-      ossia::vec3f{359.999999999, 359.999999999, 359.999999999},
+      ossia::vec3f{-1000., -1000., -1000.},
+      ossia::vec3f{1000., 1000., 1000.},
       ossia::vec3f{},
-      "Rotation",
+      "Center",
       Id<Process::Port>(3),
       this});
-  m_inlets.push_back(new Process::XYZSpinboxes{
-      ossia::vec3f{0.001, 0.001, 0.001},
-      ossia::vec3f{100., 100., 100.},
-      ossia::vec3f{1., 1., 1.},
-      "Scale",
-      Id<Process::Port>(4),
-      this});
 
+  m_inlets.push_back(
+      new Process::FloatSlider{0.01, 179.9, 90., "FOV", Id<Process::Port>(4), this});
+  m_inlets.push_back(
+      new Process::FloatSlider{0.001, 1000., 0.001, "Near", Id<Process::Port>(5), this});
   m_inlets.push_back(new Process::FloatSlider{
-      0.01, 1000., 50., "Distance", Id<Process::Port>(5), this});
+      0.001, 10000., 100000., "Far", Id<Process::Port>(6), this});
 
   m_outlets.push_back(new TextureOutlet{Id<Process::Port>(0), this});
 }
 
-Model::~Model() { }
+Model::~Model() = default;
 
 QString Model::prettyName() const noexcept
 {
-  return tr("Text");
+  return tr("Model Display");
 }
 
 }

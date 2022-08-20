@@ -421,6 +421,9 @@ public:
   QShader viewspaceVS, viewspaceFS;
   QShader barycentricVS, barycentricFS;
 
+  int64_t materialChangedIndex{-1};
+  int64_t geometryChangedIndex{-1};
+
 private:
   ~Renderer() = default;
 
@@ -434,13 +437,6 @@ private:
   {
     bool has_texcoord = mesh.flags() & Mesh::HasTexCoord;
     bool has_normals = mesh.flags() & Mesh::HasNormals;
-    /*
-    for (auto& attr : mesh.flags())
-    {
-      has_texcoord |= attr.location() == 1;
-      has_normals |= attr.location() == 3;
-    }
-*/
 
     // FIXME allow to choose
     if (has_texcoord)
@@ -454,7 +450,6 @@ private:
   void init(RenderList& renderer, QRhiResourceUpdateBatch& res) override
   {
     auto& rhi = *renderer.state.rhi;
-    auto& n = (ModelDisplayNode&)node;
     // Sampler for input texture
 
     auto sampler = rhi.newSampler(
@@ -472,9 +467,6 @@ private:
         QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips);
     auto texture = m_inputTarget.texture;
     m_samplers.push_back({sampler, texture});
-
-    QMatrix4x4 ident;
-    ident.copyDataTo(n.ubo.model);
 
     const auto& mesh = m_mesh ? *m_mesh : renderer.defaultQuad();
     defaultMeshInit(renderer, mesh, res);
@@ -518,46 +510,53 @@ private:
   {
     auto& n = (ModelDisplayNode&)node;
 
-    QMatrix4x4 model{};
-    model.translate(n.position[0], n.position[1], n.position[2]);
-    model.rotate(
-        QQuaternion::fromEulerAngles(n.rotation[0], n.rotation[1], n.rotation[2]));
-    model.scale(n.scale[0], n.scale[1], n.scale[2]);
-    QMatrix4x4 projection;
-    // FIXME should use the size of the target instead
-    // Since we can render on multiple target, this means that we must have one UBO for each
-    projection.perspective(
-        90,
-        qreal(renderer.state.renderSize.width()) / renderer.state.renderSize.height(),
-        0.01,
-        10000.);
-    QMatrix4x4 view;
+    if (n.hasMaterialChanged(materialChangedIndex))
+    {
+      QMatrix4x4 model{};
+      fromGL(n.ubo.model, model);
 
-    view.lookAt(
-        QVector3D{0, 0, n.cameraDistance}, QVector3D{0, 0, 0}, QVector3D{0, 1, 0});
-    QMatrix4x4 mv = view * model;
-    QMatrix4x4 mvp = projection * view * model;
-    QMatrix3x3 norm = model.normalMatrix();
+      QMatrix4x4 projection;
+      // FIXME should use the size of the target instead
+      // Since we can render on multiple target, this means that we must have one UBO for each
+      projection.perspective(
+          n.fov,
+          qreal(renderer.state.renderSize.width()) / renderer.state.renderSize.height(),
+          n.near,
+          n.far);
+      QMatrix4x4 view;
 
-    ModelCameraUBO* mc = &n.ubo;
-    std::fill_n((char*)mc, sizeof(ModelCameraUBO), 0);
-    toGL(model, mc->model);
-    toGL(projection, mc->projection);
-    toGL(view, mc->view);
-    toGL(mv, mc->mv);
-    toGL(mvp, mc->mvp);
-    toGL(norm, mc->modelNormal);
+      view.lookAt(
+          QVector3D{n.position[0], n.position[1], n.position[2]},
+          QVector3D{n.center[0], n.center[1], n.center[2]},
+          QVector3D{0, 1, 0});
+      QMatrix4x4 mv = view * model;
+      QMatrix4x4 mvp = projection * view * model;
+      QMatrix3x3 norm = model.normalMatrix();
 
-    GenericNodeRenderer::update(renderer, res);
-    res.updateDynamicBuffer(m_material.buffer, 0, sizeof(ModelCameraUBO), mc);
+      ModelCameraUBO* mc = &n.ubo;
+      std::fill_n((char*)mc, sizeof(ModelCameraUBO), 0);
+      toGL(model, mc->model);
+      toGL(projection, mc->projection);
+      toGL(view, mc->view);
+      toGL(mv, mc->mv);
+      toGL(mvp, mc->mvp);
+      toGL(norm, mc->modelNormal);
 
-    for (auto& pass : m_p)
-      pass.second.release();
-    m_p.clear();
+      res.updateDynamicBuffer(m_material.buffer, 0, sizeof(ModelCameraUBO), mc);
+    }
+    res.updateDynamicBuffer(
+        m_processUBO, 0, sizeof(ProcessUBO), &this->node.standardUBO);
+    defaultMeshUpdate(renderer, res);
 
-    const auto& mesh = m_mesh ? *m_mesh : renderer.defaultQuad();
-    // FIXME if(mesh.attributes.dirty..)
-    initPasses(renderer, mesh);
+    if (n.hasGeometryChanged(geometryChangedIndex))
+    {
+      for (auto& pass : m_p)
+        pass.second.release();
+      m_p.clear();
+
+      const auto& mesh = m_mesh ? *m_mesh : renderer.defaultQuad();
+      initPasses(renderer, mesh);
+    }
 
     res.generateMips(this->m_inputTarget.texture);
   }
@@ -594,40 +593,53 @@ void ModelDisplayNode::process(Message&& msg)
       {
         case 2:
         {
-          // Position
           this->position = ossia::convert<ossia::vec3f>(*val);
           this->materialChange();
           break;
         }
         case 3:
         {
-          // rotation
-          this->rotation = ossia::convert<ossia::vec3f>(*val);
+          this->center = ossia::convert<ossia::vec3f>(*val);
           this->materialChange();
           break;
         }
         case 4:
         {
-          // scale
-          this->scale = ossia::convert<ossia::vec3f>(*val);
+          this->fov = ossia::convert<float>(*val);
           this->materialChange();
           break;
         }
         case 5:
         {
-          // scale
-          this->cameraDistance = ossia::convert<float>(*val);
+          this->near = ossia::convert<float>(*val);
+          this->materialChange();
+          break;
+        }
+        case 6:
+        {
+          this->far = ossia::convert<float>(*val);
           this->materialChange();
           break;
         }
       }
+
+      p++;
     }
     else if (auto val = ossia::get_if<ossia::mesh_list>(&m))
     {
       ProcessNode::process(p, *val);
-    }
 
-    p++;
+      p++;
+    }
+    else if (auto val = ossia::get_if<ossia::transform3d>(&m))
+    {
+      memcpy(this->ubo.model, val->matrix, sizeof(val->matrix));
+      this->materialChange();
+    }
+    else
+    {
+      p++;
+    }
   }
 }
 

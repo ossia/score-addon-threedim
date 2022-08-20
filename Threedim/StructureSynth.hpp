@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Threedim/TinyObj.hpp>
 #include <boost/container/vector.hpp>
 #include <halp/controls.hpp>
 #include <halp/geometry.hpp>
@@ -27,11 +28,15 @@ public:
       // Request a computation according to the currently defined program
       void update(StrucSynth& g) { g.worker.request(this->value); }
     } program;
+
+    PositionControl position;
+    RotationControl rotation;
+    ScaleControl scale;
   } inputs;
 
   struct
   {
-    struct
+    struct : halp::mesh
     {
       halp_meta(name, "Geometry");
       halp::position_normals_geometry mesh;

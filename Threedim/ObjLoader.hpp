@@ -24,18 +24,19 @@ public:
     struct obj_t : halp::file_port<"OBJ file">
     {
       halp_meta(extensions, "*.obj");
-
       static std::function<void(ObjLoader&)> process(file_type data);
     } obj;
+    PositionControl position;
+    RotationControl rotation;
+    ScaleControl scale;
   } inputs;
 
   struct
   {
-    struct
+    struct : halp::mesh
     {
       halp_meta(name, "Geometry");
       std::vector<halp::dynamic_geometry> mesh;
-      bool dirty = false;
     } geometry;
   } outputs;
 

@@ -55,6 +55,11 @@ rule R1 w 10 {
 
   return data.toStdString();
 }
+catch (const std::exception& e)
+{
+  qDebug() << e.what();
+  return std::string{};
+}
 catch (...)
 {
   return std::string{};
@@ -80,7 +85,9 @@ std::function<void(StrucSynth&)> StrucSynth::w::work(std::string_view in)
 
       s.outputs.geometry.mesh.input.input1.offset = s.m_vertexData.size() / 2;
       s.outputs.geometry.mesh.vertices = s.m_vertexData.size() / (2 * 3);
-      s.outputs.geometry.mesh.dirty = true;
+      s.outputs.geometry.dirty_mesh = true;
+
+      qDebug() << "Vertices creatd: " << s.outputs.geometry.mesh.vertices;
     };
   }
   else

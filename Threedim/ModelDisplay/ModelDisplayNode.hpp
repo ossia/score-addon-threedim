@@ -23,8 +23,8 @@ public:
   class Renderer;
   ModelCameraUBO ubo;
 
-  ossia::vec3f position, rotation, scale;
-  float cameraDistance{50.f};
+  ossia::vec3f position, center;
+  float fov{90.f}, near{0.001f}, far{10000.f};
 };
 
 }

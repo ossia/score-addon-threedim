@@ -47,41 +47,11 @@ class TMesh : public vcg::tri::TriMesh<std::vector<TVertex>, std::vector<TFace>>
 namespace Threedim
 {
 
-Primitive::Primitive() = default;
-Primitive::~Primitive() = default;
+static thread_local TMesh mesh;
 
-void Primitive::operator()() { }
-
-void Primitive::update()
+static void
+loadTriMesh(TMesh& mesh, std::vector<float>& complete, PrimitiveOutputs& outputs)
 {
-  static thread_local TMesh mesh;
-  mesh.Clear();
-
-  switch (inputs.geometry)
-  {
-    case decltype(inputs.geometry)::Sphere:
-      vcg::tri::Sphere(mesh, 3);
-      break;
-    case decltype(inputs.geometry)::Icosahedron:
-      vcg::tri::Icosahedron(mesh);
-      break;
-    case decltype(inputs.geometry)::Cone:
-      vcg::tri::Cone(mesh, 1., 5., 12.);
-      break;
-    case decltype(inputs.geometry)::Cylinder:
-      vcg::tri::Cylinder(64, 64, mesh);
-      break;
-    case decltype(inputs.geometry)::Torus:
-      vcg::tri::Torus(mesh, 7., 4.);
-      break;
-    case decltype(inputs.geometry)::Cube:
-      vcg::Box3<float> box;
-      box.min = {-1, -1, -1};
-      box.max = {1, 1, 1};
-      vcg::tri::Box(mesh, box);
-      break;
-  }
-
   vcg::tri::Clean<TMesh>::RemoveUnreferencedVertex(mesh);
   vcg::tri::Clean<TMesh>::RemoveZeroAreaFace(mesh);
   vcg::tri::UpdateTopology<TMesh>::FaceFace(mesh);
@@ -97,7 +67,6 @@ void Primitive::update()
   complete.resize(floats);
   float* pos_start = complete.data();
   float* norm_start = complete.data() + vertices * 3;
-  const float scale = inputs.scale;
 
   for (auto& fi : mesh.face)
   { // iterate each faces
@@ -107,19 +76,19 @@ void Primitive::update()
     auto v2 = fi.V(2);
 
     auto p0 = v0->P();
-    (*pos_start++) = p0.X() * scale;
-    (*pos_start++) = p0.Y() * scale;
-    (*pos_start++) = p0.Z() * scale;
+    (*pos_start++) = p0.X();
+    (*pos_start++) = p0.Y();
+    (*pos_start++) = p0.Z();
 
     auto p1 = v1->P();
-    (*pos_start++) = p1.X() * scale;
-    (*pos_start++) = p1.Y() * scale;
-    (*pos_start++) = p1.Z() * scale;
+    (*pos_start++) = p1.X();
+    (*pos_start++) = p1.Y();
+    (*pos_start++) = p1.Z();
 
     auto p2 = v2->P();
-    (*pos_start++) = p2.X() * scale;
-    (*pos_start++) = p2.Y() * scale;
-    (*pos_start++) = p2.Z() * scale;
+    (*pos_start++) = p2.X();
+    (*pos_start++) = p2.Y();
+    (*pos_start++) = p2.Z();
 
     auto n0 = v0->N();
     (*norm_start++) = n0.X();
@@ -136,14 +105,58 @@ void Primitive::update()
     (*norm_start++) = n2.Y();
     (*norm_start++) = n2.Z();
   }
-
   outputs.geometry.mesh.buffers.main_buffer.data = complete.data();
   outputs.geometry.mesh.buffers.main_buffer.size = complete.size();
   outputs.geometry.mesh.buffers.main_buffer.dirty = true;
 
   outputs.geometry.mesh.input.input1.offset = complete.size() / 2;
   outputs.geometry.mesh.vertices = vertices;
-  outputs.geometry.mesh.dirty = true;
+  outputs.geometry.dirty_mesh = true;
+}
+
+void Cube::update()
+{
+  mesh.Clear();
+  vcg::Box3<float> box;
+  box.min = {-1, -1, -1};
+  box.max = {1, 1, 1};
+  vcg::tri::Box(mesh, box);
+  loadTriMesh(mesh, complete, outputs);
+}
+
+void Sphere::update()
+{
+  mesh.Clear();
+  vcg::tri::Sphere(mesh, inputs.subdiv);
+  loadTriMesh(mesh, complete, outputs);
+}
+
+void Icosahedron::update()
+{
+  mesh.Clear();
+  vcg::tri::Icosahedron(mesh);
+  loadTriMesh(mesh, complete, outputs);
+}
+
+void Cone::update()
+{
+  mesh.Clear();
+  vcg::tri::Cone(mesh, inputs.r1, inputs.r2, inputs.h, inputs.subdiv);
+  loadTriMesh(mesh, complete, outputs);
+}
+
+void Cylinder::update()
+{
+  mesh.Clear();
+  vcg::tri::Cylinder(inputs.slices, inputs.stacks, mesh, true);
+  loadTriMesh(mesh, complete, outputs);
+}
+
+void Torus::update()
+{
+  mesh.Clear();
+  vcg::tri::Torus(mesh, inputs.r1, inputs.r2, inputs.hdiv, inputs.vdiv);
+  loadTriMesh(mesh, complete, outputs);
 }
 
 }

@@ -118,7 +118,6 @@ class OBJLibraryHandler final
     pdata.key = Metadata<ConcreteKey_k, proc>::get();
     pdata.author = "OBJ 3D File";
     pdata.customData = p;
-    qDebug() << p;
     categories.add(file, std::move(pdata));
   }
 };
@@ -163,9 +162,15 @@ std::vector<std::unique_ptr<score::InterfaceBase>> score_addon_threedim::factori
     const score::ApplicationContext& ctx,
     const score::InterfaceKey& key) const
 {
-  auto fixed = Avnd::
-      instantiate_fx<Threedim::StrucSynth, Threedim::ObjLoader, Threedim::Primitive>(
-          ctx, key);
+  auto fixed = Avnd::instantiate_fx<
+      Threedim::StrucSynth,
+      Threedim::ObjLoader,
+      Threedim::Cube,
+      Threedim::Sphere,
+      Threedim::Icosahedron,
+      Threedim::Cylinder,
+      Threedim::Cone,
+      Threedim::Torus>(ctx, key);
   auto add = instantiate_factories<
       score::ApplicationContext,
       FW<Process::ProcessModelFactory, Gfx::ModelDisplay::ProcessFactory>,
