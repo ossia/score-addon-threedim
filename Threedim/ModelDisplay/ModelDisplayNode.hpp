@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Gfx/Graph/Node.hpp>
-#include <ossia/detail/packed_struct.hpp>
 
 #include <QFont>
 #include <QPen>
