@@ -76,8 +76,6 @@ ObjFromString(std::string_view obj_data, std::string_view mtl_data, float_vec& b
     const auto faces = shape.mesh.num_face_vertices.size();
     const auto vertices = faces * 3;
 
-    qDebug() << "Mesh:  " << pos_offset << texcoord_offset << normal_offset << texcoords
-             << normals;
     res.push_back(
         {.vertices = int64_t(vertices),
          .pos_offset = pos_offset,

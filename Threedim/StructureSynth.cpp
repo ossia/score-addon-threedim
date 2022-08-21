@@ -83,11 +83,10 @@ std::function<void(StrucSynth&)> StrucSynth::w::work(std::string_view in)
       s.outputs.geometry.mesh.buffers.main_buffer.size = s.m_vertexData.size();
       s.outputs.geometry.mesh.buffers.main_buffer.dirty = true;
 
-      s.outputs.geometry.mesh.input.input1.offset = s.m_vertexData.size() / 2;
+      s.outputs.geometry.mesh.input.input1.offset
+          = sizeof(float) * (s.m_vertexData.size() / 2);
       s.outputs.geometry.mesh.vertices = s.m_vertexData.size() / (2 * 3);
       s.outputs.geometry.dirty_mesh = true;
-
-      qDebug() << "Vertices creatd: " << s.outputs.geometry.mesh.vertices;
     };
   }
   else

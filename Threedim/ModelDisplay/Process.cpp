@@ -46,6 +46,19 @@ Model::Model(
   m_inlets.push_back(new Process::FloatSlider{
       0.001, 10000., 100000., "Far", Id<Process::Port>(6), this});
 
+  std::vector<std::pair<QString, ossia::value>> projs{
+      {"Texture coordinates", 0},
+      {"Spherical", 2},
+      {"View-space", 4},
+      {"Barycentric", 5},
+      {"Funky A", 1},
+      {"Funky B", 3},
+      {"Light", 6},
+  };
+
+  m_inlets.push_back(
+      new Process::ComboBox{projs, 0, "Projection", Id<Process::Port>(7), this});
+
   m_outlets.push_back(new TextureOutlet{Id<Process::Port>(0), this});
 }
 

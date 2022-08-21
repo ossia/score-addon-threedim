@@ -14,7 +14,7 @@
 namespace score::gfx
 {
 
-static const constexpr auto model_display_vertex_shader = R"_(#version 450
+static const constexpr auto model_display_vertex_shader_phong = R"_(#version 450
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord;
 layout(location = 3) in vec3 normal;
@@ -51,7 +51,7 @@ void main()
 }
 )_";
 
-static const constexpr auto model_display_fragment_shader = R"_(#version 450
+static const constexpr auto model_display_fragment_shader_phong = R"_(#version 450
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
   vec2 texcoordAdjust;
@@ -100,7 +100,6 @@ float materialShininess = 0.5; // material specular shininess
 
 void main ()
 {
-
     vec3 normal = normalize(esNormal);
     vec3 light;
     lightPosition.y = sin(time) * 20.;
@@ -126,7 +125,65 @@ void main ()
 
     vec4 tex = texture(y_tex, v_texcoord);
     fragColor = vec4(mix(color, tex.rgb, 0.5), materialDiffuse.a);
+}
+)_";
 
+static const constexpr auto model_display_vertex_shader_texcoord = R"_(#version 450
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec2 texcoord;
+
+layout(location = 0) out vec2 v_texcoord;
+
+layout(std140, binding = 0) uniform renderer_t {
+  mat4 clipSpaceCorrMatrix;
+  vec2 texcoordAdjust;
+  vec2 renderSize;
+};
+
+layout(std140, binding = 2) uniform material_t {
+  mat4 matrixModelViewProjection;
+  mat4 matrixModelView;
+  mat4 matrixModel;
+  mat4 matrixView;
+  mat4 matrixProjection;
+  mat3 matrixNormal;
+} mat;
+
+layout(binding = 3) uniform sampler2D y_tex;
+
+out gl_PerVertex { vec4 gl_Position; };
+
+void main()
+{
+  v_texcoord = texcoord;
+  gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+}
+)_";
+
+static const constexpr auto model_display_fragment_shader_texcoord = R"_(#version 450
+layout(std140, binding = 0) uniform renderer_t {
+  mat4 clipSpaceCorrMatrix;
+  vec2 texcoordAdjust;
+  vec2 renderSize;
+};
+
+layout(std140, binding = 2) uniform material_t {
+  mat4 matrixModelViewProjection;
+  mat4 matrixModelView;
+  mat4 matrixModel;
+  mat4 matrixView;
+  mat4 matrixProjection;
+  mat3 matrixNormal;
+} mat;
+
+layout(binding=3) uniform sampler2D y_tex;
+
+layout(location = 0) in vec2 v_texcoord;
+layout(location = 0) out vec4 fragColor;
+
+void main ()
+{
+  fragColor = texture(y_tex, v_texcoord);
 }
 )_";
 
@@ -233,6 +290,77 @@ layout(std140, binding = 2) uniform material_t {
 layout(binding = 3) uniform sampler2D y_tex;
 
 out gl_PerVertex { vec4 gl_Position; };
+void main()
+{
+  // https://www.clicktorelease.com/blog/creating-spherical-environment-mapping-shader.html
+  vec4 p = vec4( position, 1. );
+  v_e = normalize( vec3( mat.matrixModelView * p ) );
+  v_n = normal; //normalize( mat.matrixNormal * normal );
+  gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+}
+)_";
+static const constexpr auto model_display_fragment_shader_spherical = R"_(#version 450
+layout(std140, binding = 0) uniform renderer_t {
+  mat4 clipSpaceCorrMatrix;
+  vec2 texcoordAdjust;
+  vec2 renderSize;
+};
+
+layout(std140, binding = 2) uniform material_t {
+  mat4 matrixModelViewProjection;
+  mat4 matrixModelView;
+  mat4 matrixModel;
+  mat4 matrixView;
+  mat4 matrixProjection;
+  mat3 matrixNormal;
+} mat;
+
+layout(binding = 3) uniform sampler2D y_tex;
+
+layout(location = 0) in vec3 v_e;
+layout(location = 1) in vec3 v_n;
+layout(location = 0) out vec4 fragColor;
+
+const float pi = 3.14159265359;
+
+float atan2(in float y, in float x)
+{
+    bool s = (abs(x) > abs(y));
+    return mix(3.141596/2.0 - atan(x,y), atan(y,x), s);
+}
+void main ()
+{
+  vec2 uv = vec2(atan2(v_n.z, v_n.x), asin(v_n.y));
+  uv = uv * vec2(1. / 2. * pi, 1. / pi) + 0.5;
+  fragColor = texture(y_tex, uv);
+}
+)_";
+
+static const constexpr auto model_display_vertex_shader_spherical2 = R"_(#version 450
+layout(location = 0) in vec3 position;
+layout(location = 3) in vec3 normal;
+
+layout(location = 0) out vec3 v_e;
+layout(location = 1) out vec3 v_n;
+
+layout(std140, binding = 0) uniform renderer_t {
+  mat4 clipSpaceCorrMatrix;
+  vec2 texcoordAdjust;
+  vec2 renderSize;
+};
+
+layout(std140, binding = 2) uniform material_t {
+  mat4 matrixModelViewProjection;
+  mat4 matrixModelView;
+  mat4 matrixModel;
+  mat4 matrixView;
+  mat4 matrixProjection;
+  mat3 matrixNormal;
+} mat;
+
+layout(binding = 3) uniform sampler2D y_tex;
+
+out gl_PerVertex { vec4 gl_Position; };
 float atan2(in float y, in float x)
 {
     bool s = (abs(x) > abs(y));
@@ -247,8 +375,7 @@ void main()
   gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
 }
 )_";
-
-static const constexpr auto model_display_fragment_shader_spherical = R"_(#version 450
+static const constexpr auto model_display_fragment_shader_spherical2 = R"_(#version 450
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
   vec2 texcoordAdjust;
@@ -415,12 +542,15 @@ class ModelDisplayNode::Renderer : public GenericNodeRenderer
 public:
   using GenericNodeRenderer::GenericNodeRenderer;
 
+  QShader phongVS, phongFS;
   QShader texCoordVS, texCoordFS;
   QShader triplanarVS, triplanarFS;
   QShader sphericalVS, sphericalFS;
+  QShader spherical2VS, spherical2FS;
   QShader viewspaceVS, viewspaceFS;
   QShader barycentricVS, barycentricFS;
 
+  int m_curShader{0};
   int64_t materialChangedIndex{-1};
   int64_t geometryChangedIndex{-1};
 
@@ -435,16 +565,101 @@ private:
 
   void initPasses(RenderList& renderer, const Mesh& mesh)
   {
+    auto& n = (ModelDisplayNode&)node;
     bool has_texcoord = mesh.flags() & Mesh::HasTexCoord;
     bool has_normals = mesh.flags() & Mesh::HasNormals;
+    m_curShader = n.wantedProjection;
 
-    // FIXME allow to choose
-    if (has_texcoord)
-      defaultPassesInit(renderer, mesh, texCoordVS, texCoordFS);
-    else if (has_normals)
-      defaultPassesInit(renderer, mesh, sphericalVS, sphericalFS);
-    else
-      defaultPassesInit(renderer, mesh, barycentricVS, barycentricFS);
+    if (has_texcoord && has_normals)
+    {
+      switch (n.wantedProjection)
+      {
+        default:
+        case 0: // Needs TCoord
+          defaultPassesInit(renderer, mesh, texCoordVS, texCoordFS);
+          break;
+        case 1: // Needs Normals
+          defaultPassesInit(renderer, mesh, triplanarVS, triplanarFS);
+          break;
+        case 2: // Needs Normals
+          defaultPassesInit(renderer, mesh, sphericalVS, sphericalFS);
+          break;
+        case 3: // Needs Normals
+          defaultPassesInit(renderer, mesh, spherical2VS, spherical2FS);
+          break;
+        case 4: // Needs just position
+          defaultPassesInit(renderer, mesh, viewspaceVS, viewspaceFS);
+          break;
+        case 5: // Needs just position
+          defaultPassesInit(renderer, mesh, barycentricVS, barycentricFS);
+          break;
+        case 6: // Needs TCoord + Normals
+          defaultPassesInit(renderer, mesh, phongVS, phongFS);
+          break;
+      }
+    }
+    else if (has_texcoord && !has_normals)
+    {
+      switch (n.wantedProjection)
+      {
+        default:
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 6:
+          defaultPassesInit(renderer, mesh, texCoordVS, texCoordFS);
+          break;
+        case 4: // Needs just position
+          defaultPassesInit(renderer, mesh, viewspaceVS, viewspaceFS);
+          break;
+        case 5: // Needs just position
+          defaultPassesInit(renderer, mesh, barycentricVS, barycentricFS);
+          break;
+      }
+    }
+    else if (has_normals && !has_texcoord)
+    {
+      switch (n.wantedProjection)
+      {
+        default:
+        case 0:
+        case 6:
+        case 1: // Needs Normals
+          defaultPassesInit(renderer, mesh, triplanarVS, triplanarFS);
+          break;
+        case 2: // Needs Normals
+          defaultPassesInit(renderer, mesh, sphericalVS, sphericalFS);
+          break;
+        case 3: // Needs Normals
+          defaultPassesInit(renderer, mesh, spherical2VS, spherical2FS);
+          break;
+        case 4: // Needs just position
+          defaultPassesInit(renderer, mesh, viewspaceVS, viewspaceFS);
+          break;
+        case 5: // Needs just position
+          defaultPassesInit(renderer, mesh, barycentricVS, barycentricFS);
+          break;
+      }
+    }
+    else if (!has_texcoord && !has_normals)
+    {
+      switch (n.wantedProjection)
+      {
+        default:
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 6:
+        case 4: // Needs just position
+          defaultPassesInit(renderer, mesh, viewspaceVS, viewspaceFS);
+          break;
+        case 5: // Needs just position
+          defaultPassesInit(renderer, mesh, barycentricVS, barycentricFS);
+          break;
+      }
+    }
   }
 
   void init(RenderList& renderer, QRhiResourceUpdateBatch& res) override
@@ -460,11 +675,14 @@ private:
         QRhiSampler::Mirror);
     sampler->setName("ISFNode::initInputSamplers::sampler");
     SCORE_ASSERT(sampler->create());
+
     m_inputTarget = score::gfx::createRenderTarget(
         renderer.state,
         QRhiTexture::RGBA8,
         renderer.state.renderSize,
+        renderer.samples(),
         QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips);
+
     auto texture = m_inputTarget.texture;
     m_samplers.push_back({sampler, texture});
 
@@ -473,8 +691,14 @@ private:
     processUBOInit(renderer);
     m_material.init(renderer, node.input, m_samplers);
 
+    std::tie(phongVS, phongFS) = score::gfx::makeShaders(
+        renderer.state,
+        model_display_vertex_shader_phong,
+        model_display_fragment_shader_phong);
     std::tie(texCoordVS, texCoordFS) = score::gfx::makeShaders(
-        renderer.state, model_display_vertex_shader, model_display_fragment_shader);
+        renderer.state,
+        model_display_vertex_shader_texcoord,
+        model_display_fragment_shader_texcoord);
     std::tie(triplanarVS, triplanarFS) = score::gfx::makeShaders(
         renderer.state,
         model_display_vertex_shader_triplanar,
@@ -483,6 +707,10 @@ private:
         renderer.state,
         model_display_vertex_shader_spherical,
         model_display_fragment_shader_spherical);
+    std::tie(spherical2VS, spherical2FS) = score::gfx::makeShaders(
+        renderer.state,
+        model_display_vertex_shader_spherical2,
+        model_display_fragment_shader_spherical2);
     std::tie(viewspaceVS, viewspaceFS) = score::gfx::makeShaders(
         renderer.state,
         model_display_vertex_shader_viewspace,
@@ -510,6 +738,7 @@ private:
   {
     auto& n = (ModelDisplayNode&)node;
 
+    bool mustRecreatePasses = false;
     if (n.hasMaterialChanged(materialChangedIndex))
     {
       QMatrix4x4 model{};
@@ -543,12 +772,18 @@ private:
       toGL(norm, mc->modelNormal);
 
       res.updateDynamicBuffer(m_material.buffer, 0, sizeof(ModelCameraUBO), mc);
+
+      if (m_curShader != n.wantedProjection)
+        mustRecreatePasses = true;
     }
     res.updateDynamicBuffer(
         m_processUBO, 0, sizeof(ProcessUBO), &this->node.standardUBO);
     defaultMeshUpdate(renderer, res);
 
     if (n.hasGeometryChanged(geometryChangedIndex))
+      mustRecreatePasses = true;
+
+    if (mustRecreatePasses)
     {
       for (auto& pass : m_p)
         pass.second.release();
@@ -621,6 +856,12 @@ void ModelDisplayNode::process(Message&& msg)
           this->materialChange();
           break;
         }
+        case 7:
+        {
+          this->wantedProjection = ossia::convert<int>(*val);
+          this->materialChange();
+          break;
+        }
       }
 
       p++;
@@ -642,5 +883,4 @@ void ModelDisplayNode::process(Message&& msg)
     }
   }
 }
-
 }

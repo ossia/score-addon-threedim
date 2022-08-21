@@ -33,6 +33,40 @@ struct Primitive
   std::vector<float> complete;
 };
 
+struct Plane : Primitive
+{
+public:
+  halp_meta(name, "Plane")
+  halp_meta(category, "Visuals/3D/Primitives")
+  halp_meta(c_name, "3d_plane")
+  halp_meta(uuid, "1e923d52-3494-49e8-8698-b001405000da")
+
+  struct
+  {
+    PositionControl position;
+    RotationControl rotation;
+    ScaleControl scale;
+  } inputs;
+
+  struct
+  {
+    struct
+    {
+      halp_meta(name, "Geometry");
+      halp::position_texcoords_geometry mesh;
+      float transform[16]{};
+      bool dirty_mesh = false;
+      bool dirty_transform = false;
+    } geometry;
+  } outputs;
+  std::vector<float> complete;
+
+  void prepare(halp::setup) { update(); }
+  void update();
+
+  void operator()() { }
+};
+
 struct Cube : Primitive
 {
 public:

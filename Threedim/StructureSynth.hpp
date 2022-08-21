@@ -23,8 +23,9 @@ public:
 
   struct ins
   {
-    struct edit : halp::lineedit<"Text", "">
+    struct edit : halp::lineedit<"Program", "">
     {
+      halp_meta(language, "eisenscript")
       // Request a computation according to the currently defined program
       void update(StrucSynth& g) { g.worker.request(this->value); }
     } program;

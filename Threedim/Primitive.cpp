@@ -109,8 +109,34 @@ loadTriMesh(TMesh& mesh, std::vector<float>& complete, PrimitiveOutputs& outputs
   outputs.geometry.mesh.buffers.main_buffer.size = complete.size();
   outputs.geometry.mesh.buffers.main_buffer.dirty = true;
 
-  outputs.geometry.mesh.input.input1.offset = complete.size() / 2;
+  outputs.geometry.mesh.input.input1.offset = sizeof(float) * complete.size() / 2;
   outputs.geometry.mesh.vertices = vertices;
+  outputs.geometry.dirty_mesh = true;
+}
+
+void Plane::update()
+{
+  // clang-format off
+  static const constexpr float data[] = {
+    // positions
+    -1, -1, 0,
+    +1, -1, 0,
+    -1, +1, 0,
+    +1, +1, 0,
+    // tex coords
+    0, 0,
+    1, 0,
+    0, 1,
+    1, 1
+  };
+  // clang-format on
+
+  outputs.geometry.mesh.buffers.main_buffer.data = (float*)data;
+  outputs.geometry.mesh.buffers.main_buffer.size = std::ssize(data);
+  outputs.geometry.mesh.buffers.main_buffer.dirty = true;
+
+  outputs.geometry.mesh.input.input1.offset = 12 * sizeof(float);
+  outputs.geometry.mesh.vertices = 4;
   outputs.geometry.dirty_mesh = true;
 }
 

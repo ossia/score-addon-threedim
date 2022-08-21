@@ -165,6 +165,7 @@ std::vector<std::unique_ptr<score::InterfaceBase>> score_addon_threedim::factori
   auto fixed = Avnd::instantiate_fx<
       Threedim::StrucSynth,
       Threedim::ObjLoader,
+      Threedim::Plane,
       Threedim::Cube,
       Threedim::Sphere,
       Threedim::Icosahedron,

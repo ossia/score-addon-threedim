@@ -24,6 +24,8 @@ public:
 
   ossia::vec3f position, center;
   float fov{90.f}, near{0.001f}, far{10000.f};
+
+  int wantedProjection{};
 };
 
 }
