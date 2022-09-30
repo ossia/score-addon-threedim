@@ -67,8 +67,11 @@ catch (...)
 
 void StrucSynth::operator()() { }
 
-std::function<void(StrucSynth&)> StrucSynth::w::work(std::string_view in)
+std::function<void(StrucSynth&)> StrucSynth::worker::work(std::string_view in)
 {
+  if (in.empty())
+    return {};
+
   auto input = CreateObj(QString::fromUtf8(in.data(), in.size()));
   if (input.empty())
     return {};

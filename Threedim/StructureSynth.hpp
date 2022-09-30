@@ -46,7 +46,7 @@ public:
 
   void operator()();
 
-  struct w
+  struct worker
   {
     std::function<void(std::string)> request;
 
