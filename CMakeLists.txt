@@ -3,14 +3,14 @@ project(score_addon_threedim LANGUAGES CXX)
 
 if(NOT TARGET score_lib_base)
   include("${SCORE_SOURCE_DIR}/cmake/ScoreExternalAddon.cmake")
-endif()
+else()
+  if(NOT TARGET score_plugin_avnd)
+    return()
+  endif()
 
-if(NOT TARGET score_plugin_avnd)
-  return()
-endif()
-
-if(NOT TARGET score_plugin_gfx)
-  return()
+  if(NOT TARGET score_plugin_gfx)
+    return()
+  endif()
 endif()
 
 find_package(${QT_VERSION} REQUIRED COMPONENTS Xml)
