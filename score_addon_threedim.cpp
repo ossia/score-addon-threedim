@@ -162,7 +162,8 @@ std::vector<std::unique_ptr<score::InterfaceBase>> score_addon_threedim::factori
     const score::ApplicationContext& ctx,
     const score::InterfaceKey& key) const
 {
-  auto fixed = Avnd::instantiate_fx<
+  std::vector<std::unique_ptr<score::InterfaceBase>> fx;
+  Avnd::instantiate_fx<
       Threedim::StrucSynth,
       Threedim::ObjLoader,
       Threedim::Plane,
@@ -171,7 +172,7 @@ std::vector<std::unique_ptr<score::InterfaceBase>> score_addon_threedim::factori
       Threedim::Icosahedron,
       Threedim::Cylinder,
       Threedim::Cone,
-      Threedim::Torus>(ctx, key);
+      Threedim::Torus>(fx, ctx, key);
   auto add = instantiate_factories<
       score::ApplicationContext,
       FW<Process::ProcessModelFactory, Gfx::ModelDisplay::ProcessFactory>,
@@ -183,11 +184,11 @@ std::vector<std::unique_ptr<score::InterfaceBase>> score_addon_threedim::factori
          Threedim::OBJDropHandler>,
       FW<Execution::ProcessComponentFactory,
          Gfx::ModelDisplay::ProcessExecutorComponentFactory>>(ctx, key);
-  fixed.insert(
-      fixed.end(),
+  fx.insert(
+      fx.end(),
       std::make_move_iterator(add.begin()),
       std::make_move_iterator(add.end()));
-  return fixed;
+  return fx;
 }
 
 std::vector<score::PluginKey> score_addon_threedim::required() const

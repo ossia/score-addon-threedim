@@ -866,7 +866,7 @@ void ModelDisplayNode::process(Message&& msg)
 
       p++;
     }
-    else if (auto val = ossia::get_if<ossia::mesh_list>(&m))
+    else if (auto val = ossia::get_if<ossia::mesh_list_ptr>(&m))
     {
       ProcessNode::process(p, *val);
 

@@ -33,6 +33,10 @@ public:
     PositionControl position;
     RotationControl rotation;
     ScaleControl scale;
+    struct : halp::impulse_button<"Regenerate">
+    {
+      void update(StrucSynth& g) { g.inputs.program.update(g); }
+    } regen;
   } inputs;
 
   struct
