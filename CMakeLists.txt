@@ -14,9 +14,7 @@ else()
 endif()
 
 find_package(${QT_VERSION} REQUIRED COMPONENTS Xml)
-if("${QT_PREFIX}" MATCHES "Qt6")
-  find_package(${QT_VERSION} REQUIRED COMPONENTS Core5Compat)
-endif()
+
 
 add_library(
   score_addon_threedim
@@ -83,10 +81,3 @@ target_link_libraries(score_addon_threedim
     score_plugin_gfx
     ${QT_PREFIX}::Xml
 )
-
-if(TARGET "${QT_PREFIX}::Core5Compat")
-  target_link_libraries(score_addon_threedim
-    PUBLIC
-      ${QT_PREFIX}::Core5Compat
-  )
-endif()
