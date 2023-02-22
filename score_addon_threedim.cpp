@@ -73,7 +73,7 @@ class SSynthDropHandler final : public Process::ProcessDropHandler
     {
       Process::ProcessDropHandler::ProcessDrop p;
       p.creation.key = Metadata<ConcreteKey_k, proc>::get();
-      p.creation.prettyName = QFileInfo{filename}.baseName();
+      p.creation.prettyName = filename.basename;
       p.setup = [s = content](Process::ProcessModel& m, score::Dispatcher& disp) mutable
       {
         auto& pp = static_cast<proc&>(m);
@@ -139,8 +139,9 @@ class OBJDropHandler final : public Process::ProcessDropHandler
     {
       Process::ProcessDropHandler::ProcessDrop p;
       p.creation.key = Metadata<ConcreteKey_k, proc>::get();
-      p.creation.prettyName = QFileInfo{filename}.baseName();
-      p.setup = [s = filename](Process::ProcessModel& m, score::Dispatcher& disp) mutable
+      p.creation.prettyName = filename.basename;
+      p.setup = [s = filename.relative](
+                    Process::ProcessModel& m, score::Dispatcher& disp) mutable
       {
         auto& pp = static_cast<proc&>(m);
         auto& inl = *safe_cast<Process::ControlInlet*>(pp.inlets()[0]);
