@@ -116,6 +116,7 @@ loadTriMesh(TMesh& mesh, std::vector<float>& complete, PrimitiveOutputs& outputs
 
 void Plane::update()
 {
+  /*
   // clang-format off
   static const constexpr float data[] = {
     // positions
@@ -138,6 +139,10 @@ void Plane::update()
   outputs.geometry.mesh.input.input1.offset = 12 * sizeof(float);
   outputs.geometry.mesh.vertices = 4;
   outputs.geometry.dirty_mesh = true;
+  */
+  mesh.Clear();
+  vcg::tri::Grid(mesh, inputs.hdivs, inputs.vdivs, 100., 100.);
+  loadTriMesh(mesh, complete, outputs);
 }
 
 void Cube::update()

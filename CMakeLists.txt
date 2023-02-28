@@ -52,6 +52,9 @@ add_library(
   Threedim/Primitive.hpp
   Threedim/Primitive.cpp
 
+  Threedim/Noise.hpp
+  Threedim/Noise.cpp
+
 
   Threedim/ModelDisplay/ModelDisplayNode.hpp
   Threedim/ModelDisplay/ModelDisplayNode.cpp

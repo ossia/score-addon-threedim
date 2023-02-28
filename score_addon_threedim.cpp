@@ -7,6 +7,7 @@
 #include <Process/Drop/ProcessDropHandler.hpp>
 #include <Threedim/ModelDisplay/Executor.hpp>
 #include <Threedim/ModelDisplay/Process.hpp>
+#include <Threedim/Noise.hpp>
 #include <Threedim/ObjLoader.hpp>
 #include <Threedim/Primitive.hpp>
 #include <Threedim/StructureSynth.hpp>
@@ -165,6 +166,7 @@ std::vector<std::unique_ptr<score::InterfaceBase>> score_addon_threedim::factori
 {
   std::vector<std::unique_ptr<score::InterfaceBase>> fx;
   Avnd::instantiate_fx<
+      Threedim::Noise,
       Threedim::StrucSynth,
       Threedim::ObjLoader,
       Threedim::Plane,

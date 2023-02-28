@@ -46,25 +46,12 @@ public:
     PositionControl position;
     RotationControl rotation;
     ScaleControl scale;
+    halp::spinbox_i32<"H divs.", halp::range{1, 1000, 16}> hdivs;
+    halp::spinbox_i32<"V divs.", halp::range{1, 1000, 16}> vdivs;
   } inputs;
-
-  struct
-  {
-    struct
-    {
-      halp_meta(name, "Geometry");
-      halp::position_texcoords_geometry mesh;
-      float transform[16]{};
-      bool dirty_mesh = false;
-      bool dirty_transform = false;
-    } geometry;
-  } outputs;
-  std::vector<float> complete;
 
   void prepare(halp::setup) { update(); }
   void update();
-
-  void operator()() { }
 };
 
 struct Cube : Primitive
