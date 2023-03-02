@@ -46,23 +46,23 @@ void ObjLoader::rebuild_geometry()
     // Bindings
     geom.bindings.push_back(halp::dynamic_geometry::binding{
         .stride = 3 * sizeof(float),
-        .classification = halp::dynamic_geometry::binding::per_vertex,
-        .step_rate = 1});
+        .step_rate = 1,
+        .classification = halp::dynamic_geometry::binding::per_vertex});
 
     if (m.texcoord)
     {
       geom.bindings.push_back(halp::dynamic_geometry::binding{
           .stride = 2 * sizeof(float),
-          .classification = halp::dynamic_geometry::binding::per_vertex,
-          .step_rate = 1});
+          .step_rate = 1,
+          .classification = halp::dynamic_geometry::binding::per_vertex});
     }
 
     if (m.normals)
     {
       geom.bindings.push_back(halp::dynamic_geometry::binding{
           .stride = 3 * sizeof(float),
-          .classification = halp::dynamic_geometry::binding::per_vertex,
-          .step_rate = 1});
+          .step_rate = 1,
+          .classification = halp::dynamic_geometry::binding::per_vertex});
     }
 
     // Attributes

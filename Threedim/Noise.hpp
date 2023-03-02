@@ -53,9 +53,11 @@ struct DeformationControl
 
 struct Noise
 {
-  static consteval auto name() { return "Filter Geometry"; }
-  static consteval auto c_name() { return "avnd_filter_geometry"; }
-  static consteval auto uuid() { return "4f493663-3739-43df-94b5-20a31c4dc8aa"; }
+  halp_meta(name, "Mesh Noise")
+  halp_meta(c_name, "mesh_noise")
+  halp_meta(uuid, "4f493663-3739-43df-94b5-20a31c4dc8aa")
+  halp_meta(category, "Visuals/3D/Modifiers")
+  halp_meta(author, "Jean-Michaël Celerier")
 
   struct
   {

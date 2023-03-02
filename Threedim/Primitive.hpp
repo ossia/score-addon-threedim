@@ -27,6 +27,7 @@ struct PrimitiveOutputs
 struct Primitive
 {
   halp_meta(category, "Visuals/3D/Primitives")
+  halp_meta(author, "Jean-Michaël Celerier, vcglib")
 
   void operator()() { }
   PrimitiveOutputs outputs;
@@ -37,7 +38,6 @@ struct Plane : Primitive
 {
 public:
   halp_meta(name, "Plane")
-  halp_meta(category, "Visuals/3D/Primitives")
   halp_meta(c_name, "3d_plane")
   halp_meta(uuid, "1e923d52-3494-49e8-8698-b001405000da")
 
