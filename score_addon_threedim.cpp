@@ -160,11 +160,11 @@ class OBJDropHandler final : public Process::ProcessDropHandler
 score_addon_threedim::score_addon_threedim() = default;
 score_addon_threedim::~score_addon_threedim() = default;
 
-std::vector<std::unique_ptr<score::InterfaceBase>> score_addon_threedim::factories(
+std::vector<score::InterfaceBase*> score_addon_threedim::factories(
     const score::ApplicationContext& ctx,
     const score::InterfaceKey& key) const
 {
-  std::vector<std::unique_ptr<score::InterfaceBase>> fx;
+  std::vector<score::InterfaceBase*> fx;
   Avnd::instantiate_fx<
       Threedim::Noise,
       Threedim::StrucSynth,

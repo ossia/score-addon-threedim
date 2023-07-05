@@ -69,6 +69,7 @@ add_library(
   score_addon_threedim.cpp
 )
 
+set_property(TARGET score_addon_threedim PROPERTY SCORE_CUSTOM_PCH 1)
 setup_score_plugin(score_addon_threedim)
 
 target_include_directories(score_addon_threedim
@@ -76,6 +77,12 @@ target_include_directories(score_addon_threedim
     3rdparty/libssynth/src
     3rdparty/vcglib
     3rdparty/eigen
+)
+
+target_compile_options(score_addon_threedim
+  PRIVATE
+    -Ofast
+    -march=native
 )
 target_link_libraries(score_addon_threedim
   PUBLIC
