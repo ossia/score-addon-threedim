@@ -78,11 +78,6 @@ target_include_directories(score_addon_threedim
     3rdparty/eigen
 )
 
-target_compile_options(score_addon_threedim
-  PRIVATE
-    -Ofast
-    -march=native
-)
 target_link_libraries(score_addon_threedim
   PUBLIC
     score_plugin_engine
