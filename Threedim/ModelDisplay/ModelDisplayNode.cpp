@@ -25,9 +25,8 @@ layout(location = 2) out vec2 v_texcoord;
 
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -47,16 +46,15 @@ void main()
   esVertex = position;
   esNormal = normal;
   v_texcoord = texcoord;
-  gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
 }
 )_";
 
 static const constexpr auto model_display_fragment_shader_phong = R"_(#version 450
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 1) uniform process_t {
   float time;
@@ -71,7 +69,7 @@ layout(std140, binding = 1) uniform process_t {
   vec4 channelTime;
 
   float sampleRate;
-};
+} process;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -102,8 +100,8 @@ void main ()
 {
     vec3 normal = normalize(esNormal);
     vec3 light;
-    lightPosition.y = sin(time) * 20.;
-    lightPosition.z = cos(time) * 50.;
+    lightPosition.y = sin(process.time) * 20.;
+    lightPosition.z = cos(process.time) * 50.;
     if(lightPosition.w == 0.0)
     {
         light = normalize(lightPosition.xyz);
@@ -136,9 +134,8 @@ layout(location = 0) out vec2 v_texcoord;
 
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -156,16 +153,15 @@ out gl_PerVertex { vec4 gl_Position; };
 void main()
 {
   v_texcoord = texcoord;
-  gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
 }
 )_";
 
 static const constexpr auto model_display_fragment_shader_texcoord = R"_(#version 450
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -200,9 +196,8 @@ layout(location = 1) out vec3 v_coords;
 
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -221,16 +216,15 @@ void main()
 {
   v_normal = normal;
   v_coords = (mat.matrixModel * vec4(position.xyz, 1.0)).xyz;
-  gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
 }
 )_";
 
 static const constexpr auto model_display_fragment_shader_triplanar = R"_(#version 450
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -274,9 +268,8 @@ layout(location = 1) out vec3 v_n;
 
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -296,15 +289,14 @@ void main()
   vec4 p = vec4( position, 1. );
   v_e = normalize( vec3( mat.matrixModelView * p ) );
   v_n = normal; //normalize( mat.matrixNormal * normal );
-  gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
 }
 )_";
 static const constexpr auto model_display_fragment_shader_spherical = R"_(#version 450
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -345,9 +337,8 @@ layout(location = 1) out vec3 v_n;
 
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -372,15 +363,14 @@ void main()
   vec4 p = vec4( position, 1. );
   v_e = normalize( vec3( mat.matrixModelView * p ) );
   v_n = normalize( mat.matrixNormal * normal );
-  gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
 }
 )_";
 static const constexpr auto model_display_fragment_shader_spherical2 = R"_(#version 450
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -412,9 +402,8 @@ layout(location = 0) in vec3 position;
 
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -431,16 +420,15 @@ out gl_PerVertex { vec4 gl_Position; };
 
 void main()
 {
-  gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
 }
 )_";
 
 static const constexpr auto model_display_fragment_shader_viewspace = R"_(#version 450
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -457,7 +445,7 @@ layout(location = 0) out vec4 fragColor;
 
 void main ()
 {
-  fragColor = texture(y_tex, gl_FragCoord.xy / renderSize.xy);
+  fragColor = texture(y_tex, gl_FragCoord.xy / renderer.renderSize.xy);
 }
 )_";
 
@@ -468,9 +456,8 @@ layout(location = 1) out vec2 v_bary;
 
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
@@ -491,16 +478,15 @@ void main()
   else if(gl_VertexIndex % 3 == 1) v_bary = vec2(0, 1);
   else if(gl_VertexIndex % 3 == 2) v_bary = vec2(1, 0);
 
-  gl_Position = clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
 }
 )_";
 
 static const constexpr auto model_display_fragment_shader_barycentric = R"_(#version 450
 layout(std140, binding = 0) uniform renderer_t {
   mat4 clipSpaceCorrMatrix;
-  vec2 texcoordAdjust;
   vec2 renderSize;
-};
+} renderer;
 
 layout(std140, binding = 2) uniform material_t {
   mat4 matrixModelViewProjection;
