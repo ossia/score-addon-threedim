@@ -84,4 +84,5 @@ target_link_libraries(score_addon_threedim
     score_plugin_avnd
     score_plugin_gfx
     ${QT_PREFIX}::Xml
+    fmt::fmt
 )
