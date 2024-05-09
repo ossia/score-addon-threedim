@@ -5,6 +5,11 @@
 #include <QFont>
 #include <QPen>
 
+#if defined(near)
+#undef near
+#undef far
+#endif
+
 namespace score::gfx
 {
 /**
