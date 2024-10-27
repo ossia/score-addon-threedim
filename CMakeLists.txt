@@ -14,31 +14,49 @@ endif()
 
 find_package(${QT_VERSION} REQUIRED COMPONENTS Xml)
 
+# libssynth
+add_library(ssynth STATIC
+    3rdparty/libssynth/src/ssynth/Parser/EisenParser.cpp
+    3rdparty/libssynth/src/ssynth/Parser/Preprocessor.cpp
+    3rdparty/libssynth/src/ssynth/Parser/Tokenizer.cpp
 
+    3rdparty/libssynth/src/ssynth/Model/Action.cpp
+    3rdparty/libssynth/src/ssynth/Model/AmbiguousRule.cpp
+    3rdparty/libssynth/src/ssynth/Model/Builder.cpp
+    3rdparty/libssynth/src/ssynth/Model/CustomRule.cpp
+    3rdparty/libssynth/src/ssynth/Model/PrimitiveRule.cpp
+    3rdparty/libssynth/src/ssynth/Model/RuleSet.cpp
+    3rdparty/libssynth/src/ssynth/Model/State.cpp
+    3rdparty/libssynth/src/ssynth/Model/Transformation.cpp
+
+    3rdparty/libssynth/src/ssynth/Model/Rendering/TemplateRenderer.cpp
+    3rdparty/libssynth/src/ssynth/Model/Rendering/ObjRenderer.cpp
+
+    3rdparty/libssynth/src/ssynth/ColorPool.cpp
+    3rdparty/libssynth/src/ssynth/ColorUtils.cpp
+    3rdparty/libssynth/src/ssynth/Logging.cpp
+    3rdparty/libssynth/src/ssynth/MiniParser.cpp
+    3rdparty/libssynth/src/ssynth/RandomStreams.cpp
+)
+target_include_directories(ssynth
+  SYSTEM PRIVATE
+    3rdparty/libssynth/src
+)
+
+target_link_libraries(ssynth
+  PRIVATE
+    ${QT_PREFIX}::Core
+    ${QT_PREFIX}::Gui
+    ${QT_PREFIX}::Xml
+)
+
+if(NOT MSVC)
+  target_compile_options(ssynth PRIVATE -w)
+endif()
+
+# threedim addon
 add_library(
   score_addon_threedim
-
-  3rdparty/libssynth/src/ssynth/Parser/EisenParser.cpp
-  3rdparty/libssynth/src/ssynth/Parser/Preprocessor.cpp
-  3rdparty/libssynth/src/ssynth/Parser/Tokenizer.cpp
-
-  3rdparty/libssynth/src/ssynth/Model/Action.cpp
-  3rdparty/libssynth/src/ssynth/Model/AmbiguousRule.cpp
-  3rdparty/libssynth/src/ssynth/Model/Builder.cpp
-  3rdparty/libssynth/src/ssynth/Model/CustomRule.cpp
-  3rdparty/libssynth/src/ssynth/Model/PrimitiveRule.cpp
-  3rdparty/libssynth/src/ssynth/Model/RuleSet.cpp
-  3rdparty/libssynth/src/ssynth/Model/State.cpp
-  3rdparty/libssynth/src/ssynth/Model/Transformation.cpp
-
-  3rdparty/libssynth/src/ssynth/Model/Rendering/TemplateRenderer.cpp
-  3rdparty/libssynth/src/ssynth/Model/Rendering/ObjRenderer.cpp
-
-  3rdparty/libssynth/src/ssynth/ColorPool.cpp
-  3rdparty/libssynth/src/ssynth/ColorUtils.cpp
-  3rdparty/libssynth/src/ssynth/Logging.cpp
-  3rdparty/libssynth/src/ssynth/MiniParser.cpp
-  3rdparty/libssynth/src/ssynth/RandomStreams.cpp
 
   Threedim/TinyObj.cpp
 
@@ -53,7 +71,6 @@ add_library(
 
   Threedim/Noise.hpp
   Threedim/Noise.cpp
-
 
   Threedim/ModelDisplay/ModelDisplayNode.hpp
   Threedim/ModelDisplay/ModelDisplayNode.cpp
@@ -72,17 +89,17 @@ set_property(TARGET score_addon_threedim PROPERTY SCORE_CUSTOM_PCH 1)
 setup_score_plugin(score_addon_threedim)
 
 target_include_directories(score_addon_threedim
-  PRIVATE
+  SYSTEM PRIVATE
     3rdparty/libssynth/src
     3rdparty/vcglib
     3rdparty/eigen
 )
 
 target_link_libraries(score_addon_threedim
-  PUBLIC
+  PRIVATE
     score_plugin_engine
     score_plugin_avnd
     score_plugin_gfx
-    ${QT_PREFIX}::Xml
     fmt::fmt
+    ssynth
 )
