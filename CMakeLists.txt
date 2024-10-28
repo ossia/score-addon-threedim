@@ -48,6 +48,7 @@ target_link_libraries(ssynth
     ${QT_PREFIX}::Core
     ${QT_PREFIX}::Gui
     ${QT_PREFIX}::Xml
+    score_lib_base
 )
 
 if(NOT MSVC)
