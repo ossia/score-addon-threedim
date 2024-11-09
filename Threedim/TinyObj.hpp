@@ -16,6 +16,7 @@ struct mesh {
   int64_t pos_offset{}, texcoord_offset{}, normal_offset{};
   bool texcoord{};
   bool normals{};
+  bool points{};
 };
 
 std::vector<mesh> ObjFromString(

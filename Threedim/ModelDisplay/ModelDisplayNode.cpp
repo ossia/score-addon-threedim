@@ -19,6 +19,22 @@
 namespace score::gfx
 {
 
+static const constexpr auto vtx_output_triangle = R"_(
+out gl_PerVertex {
+vec4 gl_Position;
+};
+)_";
+static const constexpr auto vtx_output_point = R"_(
+out gl_PerVertex {
+vec4 gl_Position;
+float gl_PointSize;
+};
+)_";
+static const constexpr auto vtx_output_process_triangle = R"_()_";
+static const constexpr auto vtx_output_process_point = R"_(
+  gl_PointSize = 1.0f;
+)_";
+
 static const constexpr auto model_display_vertex_shader_phong = R"_(#version 450
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord;
@@ -44,7 +60,7 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
-out gl_PerVertex { vec4 gl_Position; };
+%vtx_output%
 
 void main()
 {
@@ -52,6 +68,8 @@ void main()
   esNormal = normal;
   v_texcoord = texcoord;
   gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+
+  %vtx_output_process%
 }
 )_";
 
@@ -153,12 +171,13 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
-out gl_PerVertex { vec4 gl_Position; };
+%vtx_output%
 
 void main()
 {
   v_texcoord = texcoord;
   gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  %vtx_output_process%
 }
 )_";
 
@@ -215,13 +234,14 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
-out gl_PerVertex { vec4 gl_Position; };
+%vtx_output%
 
 void main()
 {
   v_normal = normal;
   v_coords = (mat.matrixModel * vec4(position.xyz, 1.0)).xyz;
   gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  %vtx_output_process%
 }
 )_";
 
@@ -287,7 +307,7 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
-out gl_PerVertex { vec4 gl_Position; };
+%vtx_output%
 void main()
 {
   // https://www.clicktorelease.com/blog/creating-spherical-environment-mapping-shader.html
@@ -295,6 +315,7 @@ void main()
   v_e = normalize( vec3( mat.matrixModelView * p ) );
   v_n = normal; //normalize( mat.matrixNormal * normal );
   gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  %vtx_output_process%
 }
 )_";
 static const constexpr auto model_display_fragment_shader_spherical = R"_(#version 450
@@ -356,7 +377,7 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
-out gl_PerVertex { vec4 gl_Position; };
+%vtx_output%
 float atan2(in float y, in float x)
 {
     bool s = (abs(x) > abs(y));
@@ -369,6 +390,7 @@ void main()
   v_e = normalize( vec3( mat.matrixModelView * p ) );
   v_n = normalize( mat.matrixNormal * normal );
   gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  %vtx_output_process%
 }
 )_";
 static const constexpr auto model_display_fragment_shader_spherical2 = R"_(#version 450
@@ -421,11 +443,12 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
-out gl_PerVertex { vec4 gl_Position; };
+%vtx_output%
 
 void main()
 {
   gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  %vtx_output_process%
 }
 )_";
 
@@ -475,7 +498,7 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
-out gl_PerVertex { vec4 gl_Position; };
+%vtx_output%
 
 void main()
 {
@@ -484,6 +507,7 @@ void main()
   else if(gl_VertexIndex % 3 == 2) v_bary = vec2(1, 0);
 
   gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  %vtx_output_process%
 }
 )_";
 
@@ -512,6 +536,7 @@ void main ()
   fragColor = texture(y_tex, v_bary);
 }
 )_";
+
 ModelDisplayNode::ModelDisplayNode()
 {
   input.push_back(new Port{this, nullptr, Types::Image, {}});
@@ -533,15 +558,20 @@ class ModelDisplayNode::Renderer : public GenericNodeRenderer
 public:
   using GenericNodeRenderer::GenericNodeRenderer;
 
-  QShader phongVS, phongFS;
-  QShader texCoordVS, texCoordFS;
-  QShader triplanarVS, triplanarFS;
-  QShader sphericalVS, sphericalFS;
-  QShader spherical2VS, spherical2FS;
-  QShader viewspaceVS, viewspaceFS;
-  QShader barycentricVS, barycentricFS;
+  struct RenderShaders
+  {
+    QShader phongVS, phongFS;
+    QShader texCoordVS, texCoordFS;
+    QShader triplanarVS, triplanarFS;
+    QShader sphericalVS, sphericalFS;
+    QShader spherical2VS, spherical2FS;
+    QShader viewspaceVS, viewspaceFS;
+    QShader barycentricVS, barycentricFS;
+  } triangle, point;
+  QShader pclVS, pclFS;
 
   int m_curShader{0};
+  int m_draw_mode{0};
   int64_t materialChangedIndex{-1};
   int64_t geometryChangedIndex{-1};
 
@@ -554,38 +584,37 @@ private:
     return m_inputTarget;
   }
 
-  void initPasses(RenderList& renderer, const Mesh& mesh)
+  void initPasses_impl(RenderList& renderer, const Mesh& mesh, RenderShaders& shaders)
   {
     auto& n = (ModelDisplayNode&)node;
     bool has_texcoord = mesh.flags() & Mesh::HasTexCoord;
     bool has_normals = mesh.flags() & Mesh::HasNormals;
-    m_curShader = n.wantedProjection;
-
     if (has_texcoord && has_normals)
     {
       switch (n.wantedProjection)
       {
         default:
         case 0: // Needs TCoord
-          defaultPassesInit(renderer, mesh, texCoordVS, texCoordFS);
+          defaultPassesInit(renderer, mesh, shaders.texCoordVS, shaders.texCoordFS);
           break;
         case 1: // Needs Normals
-          defaultPassesInit(renderer, mesh, triplanarVS, triplanarFS);
+          defaultPassesInit(renderer, mesh, shaders.triplanarVS, shaders.triplanarFS);
           break;
         case 2: // Needs Normals
-          defaultPassesInit(renderer, mesh, sphericalVS, sphericalFS);
+          defaultPassesInit(renderer, mesh, shaders.sphericalVS, shaders.sphericalFS);
           break;
         case 3: // Needs Normals
-          defaultPassesInit(renderer, mesh, spherical2VS, spherical2FS);
+          defaultPassesInit(renderer, mesh, shaders.spherical2VS, shaders.spherical2FS);
           break;
         case 4: // Needs just position
-          defaultPassesInit(renderer, mesh, viewspaceVS, viewspaceFS);
+          defaultPassesInit(renderer, mesh, shaders.viewspaceVS, shaders.viewspaceFS);
           break;
         case 5: // Needs just position
-          defaultPassesInit(renderer, mesh, barycentricVS, barycentricFS);
+          defaultPassesInit(
+              renderer, mesh, shaders.barycentricVS, shaders.barycentricFS);
           break;
         case 6: // Needs TCoord + Normals
-          defaultPassesInit(renderer, mesh, phongVS, phongFS);
+          defaultPassesInit(renderer, mesh, shaders.phongVS, shaders.phongFS);
           break;
       }
     }
@@ -599,13 +628,14 @@ private:
         case 2:
         case 3:
         case 6:
-          defaultPassesInit(renderer, mesh, texCoordVS, texCoordFS);
+          defaultPassesInit(renderer, mesh, shaders.texCoordVS, shaders.texCoordFS);
           break;
         case 4: // Needs just position
-          defaultPassesInit(renderer, mesh, viewspaceVS, viewspaceFS);
+          defaultPassesInit(renderer, mesh, shaders.viewspaceVS, shaders.viewspaceFS);
           break;
         case 5: // Needs just position
-          defaultPassesInit(renderer, mesh, barycentricVS, barycentricFS);
+          defaultPassesInit(
+              renderer, mesh, shaders.barycentricVS, shaders.barycentricFS);
           break;
       }
     }
@@ -617,19 +647,20 @@ private:
         case 0:
         case 6:
         case 1: // Needs Normals
-          defaultPassesInit(renderer, mesh, triplanarVS, triplanarFS);
+          defaultPassesInit(renderer, mesh, shaders.triplanarVS, shaders.triplanarFS);
           break;
         case 2: // Needs Normals
-          defaultPassesInit(renderer, mesh, sphericalVS, sphericalFS);
+          defaultPassesInit(renderer, mesh, shaders.sphericalVS, shaders.sphericalFS);
           break;
         case 3: // Needs Normals
-          defaultPassesInit(renderer, mesh, spherical2VS, spherical2FS);
+          defaultPassesInit(renderer, mesh, shaders.spherical2VS, shaders.spherical2FS);
           break;
         case 4: // Needs just position
-          defaultPassesInit(renderer, mesh, viewspaceVS, viewspaceFS);
+          defaultPassesInit(renderer, mesh, shaders.viewspaceVS, shaders.viewspaceFS);
           break;
         case 5: // Needs just position
-          defaultPassesInit(renderer, mesh, barycentricVS, barycentricFS);
+          defaultPassesInit(
+              renderer, mesh, shaders.barycentricVS, shaders.barycentricFS);
           break;
       }
     }
@@ -644,15 +675,127 @@ private:
         case 3:
         case 6:
         case 4: // Needs just position
-          defaultPassesInit(renderer, mesh, viewspaceVS, viewspaceFS);
+          defaultPassesInit(renderer, mesh, shaders.viewspaceVS, shaders.viewspaceFS);
           break;
         case 5: // Needs just position
-          defaultPassesInit(renderer, mesh, barycentricVS, barycentricFS);
+          defaultPassesInit(
+              renderer, mesh, shaders.barycentricVS, shaders.barycentricFS);
           break;
       }
     }
   }
 
+  void initPasses(RenderList& renderer, const Mesh& mesh)
+  {
+    auto& n = (ModelDisplayNode&)node;
+    m_curShader = n.wantedProjection;
+    m_draw_mode = n.draw_mode;
+    switch (m_draw_mode)
+    {
+      case 0:
+        initPasses_impl(renderer, mesh, triangle);
+        break;
+      case 1:
+        initPasses_impl(renderer, mesh, point);
+        break;
+    }
+  }
+  QString processShader(QString init, std::string_view out, std::string_view proc)
+  {
+    init.replace("%vtx_output%", out.data());
+    init.replace("%vtx_output_process%", proc.data());
+    return init;
+  }
+
+  void createShaders(RenderList& renderer)
+  {
+    static const QString triangle_phongVS = processShader(
+        model_display_vertex_shader_phong,
+        vtx_output_triangle,
+        vtx_output_process_triangle);
+    static const QString triangle_texcoordVS = processShader(
+        model_display_vertex_shader_texcoord,
+        vtx_output_triangle,
+        vtx_output_process_triangle);
+    static const QString triangle_triplanarVS = processShader(
+        model_display_vertex_shader_triplanar,
+        vtx_output_triangle,
+        vtx_output_process_triangle);
+    static const QString triangle_sphericalVS = processShader(
+        model_display_vertex_shader_spherical,
+        vtx_output_triangle,
+        vtx_output_process_triangle);
+    static const QString triangle_spherical2VS = processShader(
+        model_display_vertex_shader_spherical2,
+        vtx_output_triangle,
+        vtx_output_process_triangle);
+    static const QString triangle_viewspaceVS = processShader(
+        model_display_vertex_shader_viewspace,
+        vtx_output_triangle,
+        vtx_output_process_triangle);
+    static const QString triangle_barycentricVS = processShader(
+        model_display_vertex_shader_barycentric,
+        vtx_output_triangle,
+        vtx_output_process_triangle);
+
+    std::tie(triangle.phongVS, triangle.phongFS) = score::gfx::makeShaders(
+        renderer.state, triangle_phongVS, model_display_fragment_shader_phong);
+    std::tie(triangle.texCoordVS, triangle.texCoordFS) = score::gfx::makeShaders(
+        renderer.state, triangle_texcoordVS, model_display_fragment_shader_texcoord);
+    std::tie(triangle.triplanarVS, triangle.triplanarFS) = score::gfx::makeShaders(
+        renderer.state, triangle_triplanarVS, model_display_fragment_shader_triplanar);
+    std::tie(triangle.sphericalVS, triangle.sphericalFS) = score::gfx::makeShaders(
+        renderer.state, triangle_sphericalVS, model_display_fragment_shader_spherical);
+    std::tie(triangle.spherical2VS, triangle.spherical2FS) = score::gfx::makeShaders(
+        renderer.state, triangle_spherical2VS, model_display_fragment_shader_spherical2);
+    std::tie(triangle.viewspaceVS, triangle.viewspaceFS) = score::gfx::makeShaders(
+        renderer.state, triangle_viewspaceVS, model_display_fragment_shader_viewspace);
+    std::tie(triangle.barycentricVS, triangle.barycentricFS) = score::gfx::makeShaders(
+        renderer.state,
+        triangle_barycentricVS,
+        model_display_fragment_shader_barycentric);
+
+    static const QString point_phongVS = processShader(
+        model_display_vertex_shader_phong, vtx_output_point, vtx_output_process_point);
+    static const QString point_texcoordVS = processShader(
+        model_display_vertex_shader_texcoord,
+        vtx_output_point,
+        vtx_output_process_point);
+    static const QString point_triplanarVS = processShader(
+        model_display_vertex_shader_triplanar,
+        vtx_output_point,
+        vtx_output_process_point);
+    static const QString point_sphericalVS = processShader(
+        model_display_vertex_shader_spherical,
+        vtx_output_point,
+        vtx_output_process_point);
+    static const QString point_spherical2VS = processShader(
+        model_display_vertex_shader_spherical2,
+        vtx_output_point,
+        vtx_output_process_point);
+    static const QString point_viewspaceVS = processShader(
+        model_display_vertex_shader_viewspace,
+        vtx_output_point,
+        vtx_output_process_point);
+    static const QString point_barycentricVS = processShader(
+        model_display_vertex_shader_barycentric,
+        vtx_output_point,
+        vtx_output_process_point);
+    std::tie(point.phongVS, point.phongFS) = score::gfx::makeShaders(
+        renderer.state, point_phongVS, model_display_fragment_shader_phong);
+    std::tie(point.texCoordVS, point.texCoordFS) = score::gfx::makeShaders(
+        renderer.state, point_texcoordVS, model_display_fragment_shader_texcoord);
+    std::tie(point.triplanarVS, point.triplanarFS) = score::gfx::makeShaders(
+        renderer.state, point_triplanarVS, model_display_fragment_shader_triplanar);
+    std::tie(point.sphericalVS, point.sphericalFS) = score::gfx::makeShaders(
+        renderer.state, point_sphericalVS, model_display_fragment_shader_spherical);
+    std::tie(point.spherical2VS, point.spherical2FS) = score::gfx::makeShaders(
+        renderer.state, point_spherical2VS, model_display_fragment_shader_spherical2);
+    std::tie(point.viewspaceVS, point.viewspaceFS) = score::gfx::makeShaders(
+        renderer.state, point_viewspaceVS, model_display_fragment_shader_viewspace);
+    std::tie(point.barycentricVS, point.barycentricFS) = score::gfx::makeShaders(
+        renderer.state, point_barycentricVS, model_display_fragment_shader_barycentric);
+  }
   void init(RenderList& renderer, QRhiResourceUpdateBatch& res) override
   {
     auto& rhi = *renderer.state.rhi;
@@ -664,7 +807,7 @@ private:
         QRhiSampler::Linear,
         QRhiSampler::Mirror,
         QRhiSampler::Mirror);
-    sampler->setName("ISFNode::initInputSamplers::sampler");
+    sampler->setName("ModelDisplayNode::init::sampler");
     SCORE_ASSERT(sampler->create());
 
     m_inputTarget = score::gfx::createRenderTarget(
@@ -682,35 +825,7 @@ private:
     processUBOInit(renderer);
     m_material.init(renderer, node.input, m_samplers);
 
-    std::tie(phongVS, phongFS) = score::gfx::makeShaders(
-        renderer.state,
-        model_display_vertex_shader_phong,
-        model_display_fragment_shader_phong);
-    std::tie(texCoordVS, texCoordFS) = score::gfx::makeShaders(
-        renderer.state,
-        model_display_vertex_shader_texcoord,
-        model_display_fragment_shader_texcoord);
-    std::tie(triplanarVS, triplanarFS) = score::gfx::makeShaders(
-        renderer.state,
-        model_display_vertex_shader_triplanar,
-        model_display_fragment_shader_triplanar);
-    std::tie(sphericalVS, sphericalFS) = score::gfx::makeShaders(
-        renderer.state,
-        model_display_vertex_shader_spherical,
-        model_display_fragment_shader_spherical);
-    std::tie(spherical2VS, spherical2FS) = score::gfx::makeShaders(
-        renderer.state,
-        model_display_vertex_shader_spherical2,
-        model_display_fragment_shader_spherical2);
-    std::tie(viewspaceVS, viewspaceFS) = score::gfx::makeShaders(
-        renderer.state,
-        model_display_vertex_shader_viewspace,
-        model_display_fragment_shader_viewspace);
-    std::tie(barycentricVS, barycentricFS) = score::gfx::makeShaders(
-        renderer.state,
-        model_display_vertex_shader_barycentric,
-        model_display_fragment_shader_barycentric);
-
+    createShaders(renderer);
     initPasses(renderer, mesh);
   }
 
@@ -765,6 +880,8 @@ private:
       res.updateDynamicBuffer(m_material.buffer, 0, sizeof(ModelCameraUBO), mc);
 
       if (m_curShader != n.wantedProjection)
+        mustRecreatePasses = true;
+      if (m_draw_mode != n.draw_mode)
         mustRecreatePasses = true;
     }
     res.updateDynamicBuffer(
@@ -850,6 +967,12 @@ void ModelDisplayNode::process(Message&& msg)
         case 7:
         {
           this->wantedProjection = ossia::convert<int>(*val);
+          this->materialChange();
+          break;
+        }
+        case 8:
+        {
+          this->draw_mode = ossia::convert<int>(*val);
           this->materialChange();
           break;
         }

@@ -59,6 +59,13 @@ Model::Model(
   m_inlets.push_back(
       new Process::ComboBox{projs, 0, "Projection", Id<Process::Port>(7), this});
 
+  std::vector<std::pair<QString, ossia::value>> modes{
+      {"Triangles", 0},
+      {"Points", 1},
+  };
+
+  m_inlets.push_back(
+      new Process::ComboBox{modes, 0, "Mode", Id<Process::Port>(8), this});
   m_outlets.push_back(new TextureOutlet{Id<Process::Port>(0), this});
 }
 

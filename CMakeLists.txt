@@ -82,6 +82,8 @@ add_library(
   Threedim/ModelDisplay/Process.cpp
   Threedim/ModelDisplay/Layer.hpp
 
+  3rdparty/miniply/miniply.cpp
+
   score_addon_threedim.hpp
   score_addon_threedim.cpp
 )
@@ -94,6 +96,7 @@ target_include_directories(score_addon_threedim
     3rdparty/libssynth/src
     3rdparty/vcglib
     3rdparty/eigen
+    3rdparty/miniply
 )
 
 target_link_libraries(score_addon_threedim
