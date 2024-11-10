@@ -28,6 +28,7 @@ struct Primitive
 {
   halp_meta(category, "Visuals/3D/Primitives")
   halp_meta(author, "Jean-Michaël Celerier, vcglib")
+  halp_meta(manual_url, "https://ossia.io/score-docs/processes/meshes.html#primitive")
 
   void operator()() { }
   PrimitiveOutputs outputs;

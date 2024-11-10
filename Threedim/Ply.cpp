@@ -17,7 +17,7 @@ struct TriMesh
   uint32_t numIndices = 0;
 };
 
-bool print_ply_header(const char* filename)
+static bool print_ply_header(const char* filename)
 {
   static const char* kPropertyTypes[] = {
       "char",
@@ -65,7 +65,9 @@ bool print_ply_header(const char* filename)
 
   return true;
 }
-bool load_vert_from_ply(miniply::PLYReader& reader, TriMesh* trimesh, float_vec& buf)
+
+static bool
+load_vert_from_ply(miniply::PLYReader& reader, TriMesh* trimesh, float_vec& buf)
 {
   uint32_t pos_indices[3];
   uint32_t uv_indices[3];
@@ -159,7 +161,7 @@ bool load_vert_from_ply(miniply::PLYReader& reader, TriMesh* trimesh, float_vec&
   return false;
 }
 
-TriMesh load_vertices_from_ply(miniply::PLYReader& reader, float_vec& buf)
+static TriMesh load_vertices_from_ply(miniply::PLYReader& reader, float_vec& buf)
 {
   TriMesh mesh;
 
