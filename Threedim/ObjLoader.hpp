@@ -6,8 +6,6 @@
 #include <halp/meta.hpp>
 #include <ossia/detail/mutex.hpp>
 
-#include <thread>
-
 namespace Threedim
 {
 

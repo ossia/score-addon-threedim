@@ -13,9 +13,11 @@ using float_vec = boost::container::vector<float, ossia::pod_allocator<float>>;
 
 struct mesh {
   int64_t vertices{};
-  int64_t pos_offset{}, texcoord_offset{}, normal_offset{};
+  // offset are in "elements", not bytes
+  int64_t pos_offset{}, texcoord_offset{}, normal_offset{}, color_offset{};
   bool texcoord{};
   bool normals{};
+  bool colors{};
   bool points{};
 };
 
@@ -53,8 +55,7 @@ inline void rebuild_transform(auto& inputs, auto& outputs)
   toGL(model, outputs.geometry.transform);
   outputs.geometry.dirty_transform = true;
 }
-struct PositionControl
-    : halp::xyz_spinboxes_f32<"Position", halp::range{-1000., 1000., 0.}>
+struct PositionControl : halp::xyz_spinboxes_f32<"Position", halp::free_range_min<>>
 {
   void update(auto& o) { rebuild_transform(o.inputs, o.outputs); }
 };

@@ -537,6 +537,62 @@ void main ()
 }
 )_";
 
+static const constexpr auto model_display_vertex_shader_color = R"_(#version 450
+layout(location = 0) in vec3 position;
+layout(location = 2) in vec3 color;
+
+layout(location = 0) out vec3 v_color;
+
+layout(std140, binding = 0) uniform renderer_t {
+  mat4 clipSpaceCorrMatrix;
+  vec2 renderSize;
+} renderer;
+
+layout(std140, binding = 2) uniform material_t {
+  mat4 matrixModelViewProjection;
+  mat4 matrixModelView;
+  mat4 matrixModel;
+  mat4 matrixView;
+  mat4 matrixProjection;
+  mat3 matrixNormal;
+} mat;
+
+%vtx_output%
+
+void main()
+{
+  v_color = color;
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  %vtx_output_process%
+}
+)_";
+
+static const constexpr auto model_display_fragment_shader_color = R"_(#version 450
+layout(std140, binding = 0) uniform renderer_t {
+  mat4 clipSpaceCorrMatrix;
+  vec2 renderSize;
+} renderer;
+
+layout(std140, binding = 2) uniform material_t {
+  mat4 matrixModelViewProjection;
+  mat4 matrixModelView;
+  mat4 matrixModel;
+  mat4 matrixView;
+  mat4 matrixProjection;
+  mat3 matrixNormal;
+} mat;
+
+
+layout(location = 0) in vec3 v_color;
+layout(location = 0) out vec4 fragColor;
+
+void main ()
+{
+  fragColor.rgb = v_color;
+  fragColor.a = 1.;
+}
+)_";
+
 ModelDisplayNode::ModelDisplayNode()
 {
   input.push_back(new Port{this, nullptr, Types::Image, {}});
@@ -567,6 +623,7 @@ public:
     QShader spherical2VS, spherical2FS;
     QShader viewspaceVS, viewspaceFS;
     QShader barycentricVS, barycentricFS;
+    QShader colorVS, colorFS;
   } triangle, point;
   QShader pclVS, pclFS;
 
@@ -589,6 +646,13 @@ private:
     auto& n = (ModelDisplayNode&)node;
     bool has_texcoord = mesh.flags() & Mesh::HasTexCoord;
     bool has_normals = mesh.flags() & Mesh::HasNormals;
+    bool has_colors = mesh.flags() & Mesh::HasColor;
+    if (has_colors && n.wantedProjection == 7)
+    {
+      defaultPassesInit(renderer, mesh, shaders.colorVS, shaders.colorFS);
+      return;
+    }
+
     if (has_texcoord && has_normals)
     {
       switch (n.wantedProjection)
@@ -737,6 +801,10 @@ private:
         model_display_vertex_shader_barycentric,
         vtx_output_triangle,
         vtx_output_process_triangle);
+    static const QString triangle_colorVS = processShader(
+        model_display_vertex_shader_color,
+        vtx_output_triangle,
+        vtx_output_process_triangle);
 
     std::tie(triangle.phongVS, triangle.phongFS) = score::gfx::makeShaders(
         renderer.state, triangle_phongVS, model_display_fragment_shader_phong);
@@ -754,6 +822,8 @@ private:
         renderer.state,
         triangle_barycentricVS,
         model_display_fragment_shader_barycentric);
+    std::tie(triangle.colorVS, triangle.colorFS) = score::gfx::makeShaders(
+        renderer.state, triangle_colorVS, model_display_fragment_shader_color);
 
     static const QString point_phongVS = processShader(
         model_display_vertex_shader_phong, vtx_output_point, vtx_output_process_point);
@@ -781,6 +851,9 @@ private:
         model_display_vertex_shader_barycentric,
         vtx_output_point,
         vtx_output_process_point);
+    static const QString point_colorVS = processShader(
+        model_display_vertex_shader_color, vtx_output_point, vtx_output_process_point);
+
     std::tie(point.phongVS, point.phongFS) = score::gfx::makeShaders(
         renderer.state, point_phongVS, model_display_fragment_shader_phong);
     std::tie(point.texCoordVS, point.texCoordFS) = score::gfx::makeShaders(
@@ -795,6 +868,8 @@ private:
         renderer.state, point_viewspaceVS, model_display_fragment_shader_viewspace);
     std::tie(point.barycentricVS, point.barycentricFS) = score::gfx::makeShaders(
         renderer.state, point_barycentricVS, model_display_fragment_shader_barycentric);
+    std::tie(point.colorVS, point.colorFS) = score::gfx::makeShaders(
+        renderer.state, point_colorVS, model_display_fragment_shader_color);
   }
   void init(RenderList& renderer, QRhiResourceUpdateBatch& res) override
   {

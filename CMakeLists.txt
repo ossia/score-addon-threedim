@@ -59,7 +59,10 @@ endif()
 add_library(
   score_addon_threedim
 
+  Threedim/TinyObj.hpp
   Threedim/TinyObj.cpp
+  Threedim/Ply.hpp
+  Threedim/Ply.cpp
 
   Threedim/StructureSynth.hpp
   Threedim/StructureSynth.cpp

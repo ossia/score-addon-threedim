@@ -54,6 +54,7 @@ Model::Model(
       {"Funky A", 1},
       {"Funky B", 3},
       {"Light", 6},
+      {"Color", 7},
   };
 
   m_inlets.push_back(
