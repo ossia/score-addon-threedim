@@ -64,14 +64,24 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
+%vtx_define_filters%
+
 %vtx_output%
 
 void main()
 {
-  esVertex = position;
-  esNormal = normal;
-  v_texcoord = texcoord;
-  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  vec3 in_position = position;
+  vec3 in_normal = normal;
+  vec2 in_uv = texcoord;
+  vec3 in_tangent = vec3(0);
+  vec4 in_color = vec4(1);
+
+  %vtx_do_filters%
+
+  esVertex = in_position;
+  esNormal = in_normal;
+  v_texcoord = in_uv;
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(in_position.xyz, 1.0);
 
   %vtx_output_process%
 }
@@ -175,12 +185,22 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
+%vtx_define_filters%
+
 %vtx_output%
 
 void main()
 {
-  v_texcoord = texcoord;
-  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  vec3 in_position = position;
+  vec3 in_normal = vec3(0);
+  vec2 in_uv = texcoord;
+  vec3 in_tangent = vec3(0);
+  vec4 in_color = vec4(1);
+
+  %vtx_do_filters%
+
+  v_texcoord = in_uv;
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(in_position.xyz, 1.0);
   %vtx_output_process%
 }
 )_";
@@ -238,13 +258,23 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
+%vtx_define_filters%
+
 %vtx_output%
 
 void main()
 {
-  v_normal = normal;
-  v_coords = (mat.matrixModel * vec4(position.xyz, 1.0)).xyz;
-  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  vec3 in_position = position;
+  vec3 in_normal = normal;
+  vec2 in_uv = vec2(0);
+  vec3 in_tangent = vec3(0);
+  vec4 in_color = vec4(1);
+
+  %vtx_do_filters%
+
+  v_normal = in_normal;
+  v_coords = (mat.matrixModel * vec4(in_position.xyz, 1.0)).xyz;
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(in_position.xyz, 1.0);
   %vtx_output_process%
 }
 )_";
@@ -311,14 +341,25 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
+%vtx_define_filters%
+
 %vtx_output%
+
 void main()
 {
+  vec3 in_position = position;
+  vec3 in_normal = normal;
+  vec2 in_uv = vec2(0);
+  vec3 in_tangent = vec3(0);
+  vec4 in_color = vec4(1);
+
+  %vtx_do_filters%
+
   // https://www.clicktorelease.com/blog/creating-spherical-environment-mapping-shader.html
-  vec4 p = vec4( position, 1. );
+  vec4 p = vec4( in_position, 1. );
   v_e = normalize( vec3( mat.matrixModelView * p ) );
-  v_n = normal; //normalize( mat.matrixNormal * normal );
-  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  v_n = normal; //normalize( mat.matrixNormal * in_normal );
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(in_position.xyz, 1.0);
   %vtx_output_process%
 }
 )_";
@@ -381,19 +422,31 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
+%vtx_define_filters%
+
 %vtx_output%
+
 float atan2(in float y, in float x)
 {
     bool s = (abs(x) > abs(y));
     return mix(3.141596/2.0 - atan(x,y), atan(y,x), s);
 }
+
 void main()
 {
+  vec3 in_position = position;
+  vec3 in_normal = normal;
+  vec2 in_uv = vec2(0);
+  vec3 in_tangent = vec3(0);
+  vec4 in_color = vec4(1);
+
+  %vtx_do_filters%
+
   // https://www.clicktorelease.com/blog/creating-spherical-environment-mapping-shader.html
-  vec4 p = vec4( position, 1. );
+  vec4 p = vec4( in_position, 1. );
   v_e = normalize( vec3( mat.matrixModelView * p ) );
-  v_n = normalize( mat.matrixNormal * normal );
-  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  v_n = normalize( mat.matrixNormal * in_normal );
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(in_position.xyz, 1.0);
   %vtx_output_process%
 }
 )_";
@@ -447,11 +500,21 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
+%vtx_define_filters%
+
 %vtx_output%
 
 void main()
 {
-  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  vec3 in_position = position;
+  vec3 in_normal = vec3(0);
+  vec2 in_uv = vec2(0);
+  vec3 in_tangent = vec3(0);
+  vec4 in_color = vec4(1);
+
+  %vtx_do_filters%
+
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(in_position.xyz, 1.0);
   %vtx_output_process%
 }
 )_";
@@ -502,15 +565,25 @@ layout(std140, binding = 2) uniform material_t {
 
 layout(binding = 3) uniform sampler2D y_tex;
 
+%vtx_define_filters%
+
 %vtx_output%
 
 void main()
 {
+  vec3 in_position = position;
+  vec3 in_normal = vec3(0);
+  vec2 in_uv = vec2(0);
+  vec3 in_tangent = vec3(0);
+  vec4 in_color = vec4(1);
+
+  %vtx_do_filters%
+
   if(gl_VertexIndex % 3 == 0) v_bary = vec2(0, 0);
   else if(gl_VertexIndex % 3 == 1) v_bary = vec2(0, 1);
   else if(gl_VertexIndex % 3 == 2) v_bary = vec2(1, 0);
 
-  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(position.xyz, 1.0);
+  gl_Position = renderer.clipSpaceCorrMatrix * mat.matrixModelViewProjection * vec4(in_position.xyz, 1.0);
   %vtx_output_process%
 }
 )_";
@@ -882,9 +955,30 @@ private:
     {
       case 0:
         initPasses_impl(renderer, mesh, triangle);
+        for (auto& [e, pass] : this->m_p)
+        {
+          pass.pipeline->destroy();
+          pass.pipeline->setTopology(QRhiGraphicsPipeline::Triangles);
+          pass.pipeline->create();
+        }
         break;
       case 1:
         initPasses_impl(renderer, mesh, point);
+        for (auto& [e, pass] : this->m_p)
+        {
+          pass.pipeline->destroy();
+          pass.pipeline->setTopology(QRhiGraphicsPipeline::Points);
+          pass.pipeline->create();
+        }
+        break;
+      case 2:
+        initPasses_impl(renderer, mesh, triangle);
+        for (auto& [e, pass] : this->m_p)
+        {
+          pass.pipeline->destroy();
+          pass.pipeline->setTopology(QRhiGraphicsPipeline::Lines);
+          pass.pipeline->create();
+        }
         break;
     }
   }

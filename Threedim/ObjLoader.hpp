@@ -25,7 +25,7 @@ public:
   {
     struct obj_t : halp::file_port<"3D file">
     {
-      halp_meta(extensions, "*.obj, *.ply");
+      halp_meta(extensions, "3D files (*.obj *.ply)");
       static std::function<void(ObjLoader&)> process(file_type data);
     } obj;
     PositionControl position;

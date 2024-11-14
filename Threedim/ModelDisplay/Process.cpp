@@ -25,15 +25,15 @@ Model::Model(
   m_inlets.push_back(new GeometryInlet{Id<Process::Port>(1), this});
 
   m_inlets.push_back(new Process::XYZSpinboxes{
-      ossia::vec3f{-1000., -1000., -1000.},
-      ossia::vec3f{1000., 1000., 1000.},
-      ossia::vec3f{},
+      ossia::vec3f{-10000., -10000., -10000.},
+      ossia::vec3f{10000., 10000., 10000.},
+      ossia::vec3f{-1., -1., -1.},
       "Position",
       Id<Process::Port>(2),
       this});
   m_inlets.push_back(new Process::XYZSpinboxes{
-      ossia::vec3f{-1000., -1000., -1000.},
-      ossia::vec3f{1000., 1000., 1000.},
+      ossia::vec3f{-10000., -10000., -10000.},
+      ossia::vec3f{10000., 10000., 10000.},
       ossia::vec3f{},
       "Center",
       Id<Process::Port>(3),
@@ -63,6 +63,7 @@ Model::Model(
   std::vector<std::pair<QString, ossia::value>> modes{
       {"Triangles", 0},
       {"Points", 1},
+      {"Lines", 2},
   };
 
   m_inlets.push_back(
