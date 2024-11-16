@@ -23,6 +23,45 @@
 namespace score::gfx
 {
 
+#define model_display_default_uniforms R"_(
+layout(std140, binding = 0) uniform renderer_t {
+  mat4 clipSpaceCorrMatrix;
+  vec2 renderSize;
+} renderer;
+
+// Time-dependent uniforms, only relevant during execution
+layout(std140, binding = 1) uniform process_t {
+  float TIME;
+  float TIMEDELTA;
+  float PROGRESS;
+
+  int PASSINDEX;
+  int FRAMEINDEX;
+
+  vec4 DATE;
+  vec4 MOUSE;
+  vec4 CHANNELTIME;
+
+  float SAMPLERATE;
+} isf_process_uniforms;
+
+layout(std140, binding = 2) uniform material_t {
+  mat4 matrixModelViewProjection;
+  mat4 matrixModelView;
+  mat4 matrixModel;
+  mat4 matrixView;
+  mat4 matrixProjection;
+  mat3 matrixNormal;
+} mat;
+
+float TIME = isf_process_uniforms.TIME;
+float TIMEDELTA = isf_process_uniforms.TIMEDELTA;
+float PROGRESS = isf_process_uniforms.PROGRESS;
+int PASSINDEX = isf_process_uniforms.PASSINDEX;
+int FRAMEINDEX = isf_process_uniforms.FRAMEINDEX;
+vec4 DATE = isf_process_uniforms.DATE;
+)_"
+
 const constexpr auto vtx_output_triangle = R"_(
 out gl_PerVertex {
 vec4 gl_Position;
@@ -48,19 +87,7 @@ layout(location = 0) out vec3 esVertex;
 layout(location = 1) out vec3 esNormal;
 layout(location = 2) out vec2 v_texcoord;
 
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -88,34 +115,8 @@ void main()
 )_";
 
 const constexpr auto model_display_fragment_shader_phong = R"_(#version 450
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
 
-layout(std140, binding = 1) uniform process_t {
-  float time;
-  float timeDelta;
-  float progress;
-
-  int passIndex;
-  int frameIndex;
-
-  vec4 date;
-  vec4 mouse;
-  vec4 channelTime;
-
-  float sampleRate;
-} process;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding=3) uniform sampler2D y_tex;
 
@@ -137,8 +138,8 @@ void main ()
 {
     vec3 normal = normalize(esNormal);
     vec3 light;
-    lightPosition.y = sin(process.time) * 20.;
-    lightPosition.z = cos(process.time) * 50.;
+    lightPosition.y = sin(TIME) * 20.;
+    lightPosition.z = cos(TIME) * 50.;
     if(lightPosition.w == 0.0)
     {
         light = normalize(lightPosition.xyz);
@@ -169,19 +170,7 @@ layout(location = 1) in vec2 texcoord;
 
 layout(location = 0) out vec2 v_texcoord;
 
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -206,19 +195,8 @@ void main()
 )_";
 
 const constexpr auto model_display_fragment_shader_texcoord = R"_(#version 450
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
 
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding=3) uniform sampler2D y_tex;
 
@@ -242,19 +220,7 @@ layout(location = 1) in vec3 normal;
 layout(location = 0) out vec3 v_normal;
 layout(location = 1) out vec3 v_coords;
 
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -280,19 +246,8 @@ void main()
 )_";
 
 const constexpr auto model_display_fragment_shader_triplanar = R"_(#version 450
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
 
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -325,19 +280,7 @@ layout(location = 3) in vec3 normal;
 layout(location = 0) out vec3 v_e;
 layout(location = 1) out vec3 v_n;
 
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -364,19 +307,8 @@ void main()
 }
 )_";
 const constexpr auto model_display_fragment_shader_spherical = R"_(#version 450
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
 
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -406,19 +338,7 @@ layout(location = 3) in vec3 normal;
 layout(location = 0) out vec3 v_e;
 layout(location = 1) out vec3 v_n;
 
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -451,19 +371,8 @@ void main()
 }
 )_";
 const constexpr auto model_display_fragment_shader_spherical2 = R"_(#version 450
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
 
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -484,19 +393,7 @@ void main ()
 const constexpr auto model_display_vertex_shader_viewspace = R"_(#version 450
 layout(location = 0) in vec3 position;
 
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -520,19 +417,8 @@ void main()
 )_";
 
 const constexpr auto model_display_fragment_shader_viewspace = R"_(#version 450
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
 
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -549,19 +435,7 @@ layout(location = 0) in vec3 position;
 
 layout(location = 1) out vec2 v_bary;
 
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -589,19 +463,8 @@ void main()
 )_";
 
 const constexpr auto model_display_fragment_shader_barycentric = R"_(#version 450
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
 
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 layout(binding = 3) uniform sampler2D y_tex;
 
@@ -620,19 +483,7 @@ layout(location = 2) in vec3 color;
 
 layout(location = 0) out vec3 v_color;
 
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
+)_" model_display_default_uniforms R"_(
 
 %vtx_define_filters%
 
@@ -656,20 +507,8 @@ void main()
 )_";
 
 const constexpr auto model_display_fragment_shader_color = R"_(#version 450
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
 
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
-
+)_" model_display_default_uniforms R"_(
 
 layout(location = 0) in vec3 v_color;
 layout(location = 0) out vec4 fragColor;
@@ -983,7 +822,7 @@ private:
     }
   }
 
-  QString processShader(
+  QString processVertexShader(
       QString init,
       std::string_view out,
       std::string_view proc,
@@ -1027,42 +866,42 @@ private:
 
   void createShaders(RenderList& renderer, const score::gfx::Mesh& mesh)
   {
-    const QString triangle_phongVS = processShader(
+    const QString triangle_phongVS = processVertexShader(
         model_display_vertex_shader_phong,
         vtx_output_triangle,
         vtx_output_process_triangle,
         mesh);
-    const QString triangle_texcoordVS = processShader(
+    const QString triangle_texcoordVS = processVertexShader(
         model_display_vertex_shader_texcoord,
         vtx_output_triangle,
         vtx_output_process_triangle,
         mesh);
-    const QString triangle_triplanarVS = processShader(
+    const QString triangle_triplanarVS = processVertexShader(
         model_display_vertex_shader_triplanar,
         vtx_output_triangle,
         vtx_output_process_triangle,
         mesh);
-    const QString triangle_sphericalVS = processShader(
+    const QString triangle_sphericalVS = processVertexShader(
         model_display_vertex_shader_spherical,
         vtx_output_triangle,
         vtx_output_process_triangle,
         mesh);
-    const QString triangle_spherical2VS = processShader(
+    const QString triangle_spherical2VS = processVertexShader(
         model_display_vertex_shader_spherical2,
         vtx_output_triangle,
         vtx_output_process_triangle,
         mesh);
-    const QString triangle_viewspaceVS = processShader(
+    const QString triangle_viewspaceVS = processVertexShader(
         model_display_vertex_shader_viewspace,
         vtx_output_triangle,
         vtx_output_process_triangle,
         mesh);
-    const QString triangle_barycentricVS = processShader(
+    const QString triangle_barycentricVS = processVertexShader(
         model_display_vertex_shader_barycentric,
         vtx_output_triangle,
         vtx_output_process_triangle,
         mesh);
-    const QString triangle_colorVS = processShader(
+    const QString triangle_colorVS = processVertexShader(
         model_display_vertex_shader_color,
         vtx_output_triangle,
         vtx_output_process_triangle,
@@ -1087,42 +926,42 @@ private:
     std::tie(triangle.colorVS, triangle.colorFS) = score::gfx::makeShaders(
         renderer.state, triangle_colorVS, model_display_fragment_shader_color);
 
-    const QString point_phongVS = processShader(
+    const QString point_phongVS = processVertexShader(
         model_display_vertex_shader_phong,
         vtx_output_point,
         vtx_output_process_point,
         mesh);
-    const QString point_texcoordVS = processShader(
+    const QString point_texcoordVS = processVertexShader(
         model_display_vertex_shader_texcoord,
         vtx_output_point,
         vtx_output_process_point,
         mesh);
-    const QString point_triplanarVS = processShader(
+    const QString point_triplanarVS = processVertexShader(
         model_display_vertex_shader_triplanar,
         vtx_output_point,
         vtx_output_process_point,
         mesh);
-    const QString point_sphericalVS = processShader(
+    const QString point_sphericalVS = processVertexShader(
         model_display_vertex_shader_spherical,
         vtx_output_point,
         vtx_output_process_point,
         mesh);
-    const QString point_spherical2VS = processShader(
+    const QString point_spherical2VS = processVertexShader(
         model_display_vertex_shader_spherical2,
         vtx_output_point,
         vtx_output_process_point,
         mesh);
-    const QString point_viewspaceVS = processShader(
+    const QString point_viewspaceVS = processVertexShader(
         model_display_vertex_shader_viewspace,
         vtx_output_point,
         vtx_output_process_point,
         mesh);
-    const QString point_barycentricVS = processShader(
+    const QString point_barycentricVS = processVertexShader(
         model_display_vertex_shader_barycentric,
         vtx_output_point,
         vtx_output_process_point,
         mesh);
-    const QString point_colorVS = processShader(
+    const QString point_colorVS = processVertexShader(
         model_display_vertex_shader_color,
         vtx_output_point,
         vtx_output_process_point,
