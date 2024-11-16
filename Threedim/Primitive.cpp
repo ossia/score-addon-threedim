@@ -2,6 +2,7 @@
 
 #include <vcg/complex/algorithms/clean.h>
 #include <vcg/complex/algorithms/create/platonic.h>
+#include <vcg/complex/algorithms/update/texture.h>
 
 #include <QDebug>
 #include <QString>
@@ -25,6 +26,7 @@ class TVertex
           vertex::BitFlags,
           vertex::Coord3f,
           vertex::Normal3f,
+          vertex::TexCoord2f,
           vertex::Mark>
 {
 };
@@ -34,6 +36,7 @@ class TFace
           TUsedTypes,
           face::VertexRef,
           face::Normal3f,
+          face::WedgeTexCoord2f,
           face::BitFlags,
           face::FFAdj>
 {
@@ -58,15 +61,18 @@ loadTriMesh(TMesh& mesh, std::vector<float>& complete, PrimitiveOutputs& outputs
   vcg::tri::Clean<TMesh>::RemoveNonManifoldFace(mesh);
   vcg::tri::UpdateTopology<TMesh>::FaceFace(mesh);
   vcg::tri::UpdateNormal<TMesh>::PerVertexNormalized(mesh);
+  vcg::tri::UpdateTexture<TMesh>::WedgeTexFromPlane(mesh,vcg::Point3f{0.,0.,0.},vcg::Point3f{1.,1.,1.},1.);
 
   vcg::tri::RequirePerVertexNormal(mesh);
+  vcg::tri::RequirePerVertexTexCoord(mesh);
 
   complete.clear();
   const auto vertices = mesh.face.size() * 3;
-  const auto floats = vertices * (3 + 3); // 3 float for pos, 3 float for normal
+  const auto floats = vertices * (3 + 3 + 2); // 3 float for pos, 3 float for normal, 2 float for UV
   complete.resize(floats);
   float* pos_start = complete.data();
   float* norm_start = complete.data() + vertices * 3;
+  float* uv_start = complete.data() + vertices * 3 + vertices * 3;
 
   for (auto& fi : mesh.face)
   { // iterate each faces
@@ -104,12 +110,36 @@ loadTriMesh(TMesh& mesh, std::vector<float>& complete, PrimitiveOutputs& outputs
     (*norm_start++) = n2.X();
     (*norm_start++) = n2.Y();
     (*norm_start++) = n2.Z();
+
+#if 0
+    auto uv0 = fi.WT(0);
+    (*uv_start++) = uv0.U();
+    (*uv_start++) = uv0.V();
+
+    auto uv1 = fi.WT(1);
+    (*uv_start++) = uv1.U();
+    (*uv_start++) = uv1.V();
+
+    auto uv2 = fi.WT(2);
+    (*uv_start++) = uv2.U();
+    (*uv_start++) = uv2.V();
+#endif
+    (*uv_start++) =p0.X();
+    (*uv_start++) =p0.Y();
+
+    (*uv_start++) =p1.X();
+    (*uv_start++) =p1.Y();
+
+    (*uv_start++) =p2.X();
+    (*uv_start++) =p2.Y();
   }
   outputs.geometry.mesh.buffers.main_buffer.data = complete.data();
   outputs.geometry.mesh.buffers.main_buffer.size = complete.size();
   outputs.geometry.mesh.buffers.main_buffer.dirty = true;
 
-  outputs.geometry.mesh.input.input1.offset = sizeof(float) * complete.size() / 2;
+  outputs.geometry.mesh.input.input0.offset = 0;
+  outputs.geometry.mesh.input.input1.offset = sizeof(float) * vertices * 3;
+  outputs.geometry.mesh.input.input2.offset = sizeof(float) * vertices * (3+3);
   outputs.geometry.mesh.vertices = vertices;
   outputs.geometry.dirty_mesh = true;
 }
@@ -141,7 +171,7 @@ void Plane::update()
   outputs.geometry.dirty_mesh = true;
   */
   mesh.Clear();
-  vcg::tri::Grid(mesh, inputs.hdivs, inputs.vdivs, 100., 100.);
+  vcg::tri::Grid(mesh, inputs.hdivs, inputs.vdivs, 1., 1.);
   loadTriMesh(mesh, complete, outputs);
 }
 
