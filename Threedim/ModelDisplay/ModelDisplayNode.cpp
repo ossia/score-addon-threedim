@@ -23,44 +23,45 @@
 namespace score::gfx
 {
 
-#define model_display_default_uniforms R"_(
-layout(std140, binding = 0) uniform renderer_t {
-  mat4 clipSpaceCorrMatrix;
-  vec2 renderSize;
-} renderer;
-
-// Time-dependent uniforms, only relevant during execution
-layout(std140, binding = 1) uniform process_t {
-  float TIME;
-  float TIMEDELTA;
-  float PROGRESS;
-
-  int PASSINDEX;
-  int FRAMEINDEX;
-
-  vec4 DATE;
-  vec4 MOUSE;
-  vec4 CHANNELTIME;
-
-  float SAMPLERATE;
-} isf_process_uniforms;
-
-layout(std140, binding = 2) uniform material_t {
-  mat4 matrixModelViewProjection;
-  mat4 matrixModelView;
-  mat4 matrixModel;
-  mat4 matrixView;
-  mat4 matrixProjection;
-  mat3 matrixNormal;
-} mat;
-
-float TIME = isf_process_uniforms.TIME;
-float TIMEDELTA = isf_process_uniforms.TIMEDELTA;
-float PROGRESS = isf_process_uniforms.PROGRESS;
-int PASSINDEX = isf_process_uniforms.PASSINDEX;
-int FRAMEINDEX = isf_process_uniforms.FRAMEINDEX;
-vec4 DATE = isf_process_uniforms.DATE;
-)_"
+#define model_display_default_uniforms \
+  "\
+layout(std140, binding = 0) uniform renderer_t { \n\
+  mat4 clipSpaceCorrMatrix; \n\
+  vec2 renderSize; \n\
+} renderer; \n\
+ \n\
+// Time-dependent uniforms, only relevant during execution \n\
+layout(std140, binding = 1) uniform process_t { \n\
+  float TIME; \n\
+  float TIMEDELTA; \n\
+  float PROGRESS; \n\
+ \n\
+  int PASSINDEX; \n\
+  int FRAMEINDEX; \n\
+ \n\
+  vec4 DATE; \n\
+  vec4 MOUSE; \n\
+  vec4 CHANNELTIME; \n\
+ \n\
+  float SAMPLERATE; \n\
+} isf_process_uniforms; \n\
+ \n\
+layout(std140, binding = 2) uniform material_t { \n\
+  mat4 matrixModelViewProjection; \n\
+  mat4 matrixModelView; \n\
+  mat4 matrixModel; \n\
+  mat4 matrixView; \n\
+  mat4 matrixProjection; \n\
+  mat3 matrixNormal; \n\
+} mat; \n\
+ \n\
+float TIME = isf_process_uniforms.TIME; \n\
+float TIMEDELTA = isf_process_uniforms.TIMEDELTA; \n\
+float PROGRESS = isf_process_uniforms.PROGRESS; \n\
+int PASSINDEX = isf_process_uniforms.PASSINDEX; \n\
+int FRAMEINDEX = isf_process_uniforms.FRAMEINDEX; \n\
+vec4 DATE = isf_process_uniforms.DATE; \n\
+"
 
 const constexpr auto vtx_output_triangle = R"_(
 out gl_PerVertex {
