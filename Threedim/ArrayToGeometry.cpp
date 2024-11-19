@@ -1,17 +1,19 @@
-#include "Primitive.hpp"
+#include "ArrayToGeometry.hpp"
 
 #include <Threedim/MeshHelpers.hpp>
 #include <Threedim/TinyObj.hpp>
+#include <vcg/complex/algorithms/create/ball_pivoting.h>
+#include <vcg/complex/complex.h>
 
 #include <QDebug>
 #include <QString>
 
 namespace Threedim
 {
+static thread_local TMesh array_to_mesh;
 
-void loadTriMesh(TMesh& mesh, std::vector<float>& complete, PrimitiveOutputs& outputs)
+void loadPoints(TMesh& mesh, std::vector<float>& complete, PrimitiveOutputs& outputs)
 {
-  vcg::tri::Clean<TMesh>::RemoveUnreferencedVertex(mesh);
   vcg::tri::Clean<TMesh>::RemoveZeroAreaFace(mesh);
   vcg::tri::UpdateTopology<TMesh>::FaceFace(mesh);
   vcg::tri::Clean<TMesh>::RemoveNonManifoldFace(mesh);
@@ -101,82 +103,48 @@ void loadTriMesh(TMesh& mesh, std::vector<float>& complete, PrimitiveOutputs& ou
   outputs.geometry.mesh.vertices = vertices;
   outputs.geometry.dirty_mesh = true;
 }
-
-static thread_local TMesh mesh;
-void Plane::update()
+void ArrayToMesh::create_mesh(std::span<float> v)
 {
-  /*
-  // clang-format off
-  static const constexpr float data[] = {
-    // positions
-    -1, -1, 0,
-    +1, -1, 0,
-    -1, +1, 0,
-    +1, +1, 0,
-    // tex coords
-    0, 0,
-    1, 0,
-    0, 1,
-    1, 1
-  };
-  // clang-format on
+  if (v.size() < 3)
+    return;
 
-  outputs.geometry.mesh.buffers.main_buffer.data = (float*)data;
-  outputs.geometry.mesh.buffers.main_buffer.size = std::ssize(data);
-  outputs.geometry.mesh.buffers.main_buffer.dirty = true;
+  if (inputs.triangulate)
+  {
+    auto& m = array_to_mesh;
+    m.Clear();
+    vcg::tri::Allocator<TMesh>::AddVertices(m, v.size() / 3);
 
-  outputs.geometry.mesh.input.input1.offset = 12 * sizeof(float);
-  outputs.geometry.mesh.vertices = 4;
-  outputs.geometry.dirty_mesh = true;
-  */
-  mesh.Clear();
-  vcg::tri::Grid(mesh, inputs.hdivs, inputs.vdivs, 1., 1.);
-  loadTriMesh(mesh, complete, outputs);
+    for (std::size_t i = 0; i < v.size(); i += 3)
+    {
+      auto& vtx = m.vert[i / 3].P();
+      vtx.X() = v[i + 0];
+      vtx.Y() = v[i + 1];
+      vtx.Z() = v[i + 2];
+    }
+    vcg::tri::UpdateBounding<TMesh>::Box(m);
+    vcg::tri::UpdateNormal<TMesh>::PerFace(m);
+
+    vcg::tri::BallPivoting<TMesh> pivot(m, 0.01, 0.05);
+    pivot.BuildMesh();
+    loadTriMesh(m, complete, outputs);
+  }
+  else
+  {
+    std::size_t vertices = v.size() / 3;
+
+    this->complete.clear();
+    this->complete.resize(std::ceil((v.size() / 3.) * (3 + 3 + 2)));
+    std::copy_n(v.begin(), v.size(), complete.begin());
+
+    outputs.geometry.mesh.buffers.main_buffer.data = complete.data();
+    outputs.geometry.mesh.buffers.main_buffer.size = complete.size();
+    outputs.geometry.mesh.buffers.main_buffer.dirty = true;
+
+    outputs.geometry.mesh.input.input0.offset = 0;
+    outputs.geometry.mesh.input.input1.offset = sizeof(float) * vertices * 3;
+    outputs.geometry.mesh.input.input2.offset = sizeof(float) * vertices * (3 + 3);
+    outputs.geometry.mesh.vertices = vertices;
+    outputs.geometry.dirty_mesh = true;
+  }
 }
-
-void Cube::update()
-{
-  mesh.Clear();
-  vcg::Box3<float> box;
-  box.min = {-1, -1, -1};
-  box.max = {1, 1, 1};
-  vcg::tri::Box(mesh, box);
-  loadTriMesh(mesh, complete, outputs);
-}
-
-void Sphere::update()
-{
-  mesh.Clear();
-  vcg::tri::Sphere(mesh, inputs.subdiv);
-  loadTriMesh(mesh, complete, outputs);
-}
-
-void Icosahedron::update()
-{
-  mesh.Clear();
-  vcg::tri::Icosahedron(mesh);
-  loadTriMesh(mesh, complete, outputs);
-}
-
-void Cone::update()
-{
-  mesh.Clear();
-  vcg::tri::Cone(mesh, inputs.r1, inputs.r2, inputs.h, inputs.subdiv);
-  loadTriMesh(mesh, complete, outputs);
-}
-
-void Cylinder::update()
-{
-  mesh.Clear();
-  vcg::tri::Cylinder(inputs.slices, inputs.stacks, mesh, true);
-  loadTriMesh(mesh, complete, outputs);
-}
-
-void Torus::update()
-{
-  mesh.Clear();
-  vcg::tri::Torus(mesh, inputs.r1, inputs.r2, inputs.hdiv, inputs.vdiv);
-  loadTriMesh(mesh, complete, outputs);
-}
-
 }

@@ -64,6 +64,9 @@ add_library(
   Threedim/Ply.hpp
   Threedim/Ply.cpp
 
+  Threedim/ArrayToGeometry.hpp
+  Threedim/ArrayToGeometry.cpp
+
   Threedim/StructureSynth.hpp
   Threedim/StructureSynth.cpp
 

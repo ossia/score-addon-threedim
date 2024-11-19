@@ -5,6 +5,7 @@
 #include <Library/LibrarySettings.hpp>
 #include <Library/ProcessesItemModel.hpp>
 #include <Process/Drop/ProcessDropHandler.hpp>
+#include <Threedim/ArrayToGeometry.hpp>
 #include <Threedim/ModelDisplay/Executor.hpp>
 #include <Threedim/ModelDisplay/Process.hpp>
 #include <Threedim/Noise.hpp>
@@ -166,6 +167,7 @@ std::vector<score::InterfaceBase*> score_addon_threedim::factories(
 {
   std::vector<score::InterfaceBase*> fx;
   Avnd::instantiate_fx<
+      Threedim::ArrayToMesh,
       Threedim::Noise,
       Threedim::StrucSynth,
       Threedim::ObjLoader,

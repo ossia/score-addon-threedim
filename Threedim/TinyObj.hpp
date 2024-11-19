@@ -1,12 +1,16 @@
 #pragma once
-#include <ossia/detail/pod_vector.hpp>
-#include <halp/controls.hpp>
 #include <boost/container/vector.hpp>
+#include <halp/controls.hpp>
+#include <halp/geometry.hpp>
+#include <halp/meta.hpp>
+#include <ossia/detail/pod_vector.hpp>
+
 #include <QMatrix4x4>
 
-#include <string_view>
-#include <vector>
 #include <cstring>
+#include <vector>
+
+#include <string_view>
 namespace Threedim
 {
 using float_vec = boost::container::vector<float, ossia::pod_allocator<float>>;
@@ -69,4 +73,20 @@ struct ScaleControl : halp::xyz_spinboxes_f32<"Scale", halp::range{0.00001, 1000
   void update(auto& o) { rebuild_transform(o.inputs, o.outputs); }
 };
 
+struct Update
+{
+  void update(auto& obj) { obj.update(); }
+};
+
+struct PrimitiveOutputs
+{
+  struct
+  {
+    halp_meta(name, "Geometry");
+    halp::position_normals_texcoords_geometry mesh;
+    float transform[16]{};
+    bool dirty_mesh = false;
+    bool dirty_transform = false;
+  } geometry;
+};
 }

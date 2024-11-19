@@ -7,23 +7,6 @@
 
 namespace Threedim
 {
-struct Update
-{
-  void update(auto& obj) { obj.update(); }
-};
-
-struct PrimitiveOutputs
-{
-  struct
-  {
-    halp_meta(name, "Geometry");
-    halp::position_normals_texcoords_geometry mesh;
-    float transform[16]{};
-    bool dirty_mesh = false;
-    bool dirty_transform = false;
-  } geometry;
-};
-
 struct Primitive
 {
   halp_meta(category, "Visuals/3D/Primitives")
